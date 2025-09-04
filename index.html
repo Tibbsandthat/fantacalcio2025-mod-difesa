@@ -2,251 +2,390 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Asta Fantacalcio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#667eea">
+    <title>Fantacalcio Manager</title>
+    
     <style>
+        :root {
+            /* iOS Safe Areas */
+            --sat: env(safe-area-inset-top);
+            --sab: env(safe-area-inset-bottom);
+            --sal: env(safe-area-inset-left);
+            --sar: env(safe-area-inset-right);
+            
+            /* Theme Colors */
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #764ba2;
+            --success: #4CAF50;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --dark: #1a202c;
+            --light: #f7fafc;
+            
+            /* Spacing */
+            --radius: 12px;
+            --radius-lg: 20px;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding-top: var(--sat);
+            padding-bottom: calc(70px + var(--sab));
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        /* Header */
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            top: var(--sat);
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
         }
 
-        h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Header Stats */
-        .stats-header {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+        /* Stats Cards - Horizontal Scroll */
+        .stats-container {
+            padding: 20px 0;
+            margin-bottom: 10px;
+        }
+
+        .stats-scroll {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 0 20px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .stats-scroll::-webkit-scrollbar {
+            display: none;
         }
 
         .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
+            flex: 0 0 140px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            scroll-snap-align: start;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .stat-label {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 5px;
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }
 
         .stat-value {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #333;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
         }
 
         .stat-progress {
-            margin-top: 10px;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin-top: 8px;
             overflow: hidden;
         }
 
         .stat-progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-            transition: width 0.5s;
+            background: linear-gradient(90deg, var(--success), #8BC34A);
+            border-radius: 3px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Role Sections */
-        .role-section {
+        /* Main Content */
+        .main-content {
+            padding: 0 20px 20px;
+        }
+
+        /* Role Tabs - Swipeable */
+        .role-tabs-container {
+            margin: 0 -20px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .role-tabs {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding: 12px 20px;
+            gap: 12px;
+        }
+
+        .role-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .role-tab {
+            flex: 0 0 auto;
+            padding: 10px 20px;
             background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: var(--radius);
+            font-weight: 600;
+            color: var(--dark);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            scroll-snap-align: center;
         }
 
-        .role-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
+        .role-tab.active {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
         }
 
-        .role-title {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #333;
+        /* Role Content */
+        .role-content {
+            display: none;
+            animation: fadeIn 0.3s;
         }
 
-        .role-budget {
-            display: flex;
-            gap: 20px;
-            align-items: center;
+        .role-content.active {
+            display: block;
         }
 
-        .budget-info {
-            text-align: right;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .budget-label {
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        .budget-value {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #333;
-        }
-
-        /* Slot Groups */
-        .slot-group {
-            margin-bottom: 25px;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 10px;
+        /* Slot Cards */
+        .slot-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
         .slot-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .slot-title {
-            font-size: 1.1em;
+            font-size: 1rem;
             font-weight: 600;
-            color: #555;
+            color: var(--dark);
         }
 
-        .slot-controls {
+        .slot-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-critical {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .badge-warning {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .badge-good {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* Player List */
+        .player-list {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .add-player-btn {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
+        .player-item {
+            background: #f8f9fa;
+            border-radius: var(--radius);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .add-player-btn:hover {
-            background: #45a049;
+        .player-item:active {
+            transform: scale(0.98);
+            background: #e9ecef;
         }
 
-        /* Player Table */
-        .player-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .player-table th {
-            background: #667eea;
-            color: white;
-            padding: 10px;
-            text-align: left;
-            font-size: 0.9em;
-        }
-
-        .player-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .player-row {
-            transition: background 0.3s;
-        }
-
-        .player-row:hover {
-            background: #f0f0f0;
+        .player-info {
+            flex: 1;
         }
 
         .player-name {
             font-weight: 600;
-            color: #333;
+            color: var(--dark);
+            font-size: 0.95rem;
         }
 
-        .price-input {
-            width: 80px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
+        .player-details {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 2px;
+        }
+
+        .player-prices {
+            text-align: right;
+        }
+
+        .price-target {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.95rem;
+        }
+
+        .price-avg {
+            font-size: 0.75rem;
+            color: #718096;
+            text-decoration: line-through;
+        }
+
+        /* Action Buttons */
+        .player-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
         }
 
         .action-btn {
-            padding: 5px 10px;
-            margin: 0 2px;
+            padding: 8px 12px;
             border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            transition: opacity 0.3s;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: all 0.2s;
         }
 
-        .buy-btn {
-            background: #4CAF50;
+        .btn-buy {
+            background: var(--success);
             color: white;
         }
 
-        .remove-btn {
-            background: #f44336;
+        .btn-remove {
+            background: #e2e8f0;
+            color: #718096;
+        }
+
+        /* FAB - Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: calc(80px + var(--sab));
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
             color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            font-size: 24px;
+            border: none;
+            z-index: 90;
+            transition: all 0.3s;
         }
 
-        .action-btn:hover {
-            opacity: 0.8;
+        .fab:active {
+            transform: scale(0.9);
         }
 
-        /* Alert Badges */
-        .alert-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: bold;
-            margin-left: 10px;
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 8px 0 var(--sab);
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
+            z-index: 100;
         }
 
-        .alert-critical {
-            background: #ff4444;
-            color: white;
+        .nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
         }
 
-        .alert-warning {
-            background: #ffaa00;
-            color: white;
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: #718096;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            position: relative;
         }
 
-        .alert-good {
-            background: #00C851;
-            color: white;
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 0.7rem;
+            font-weight: 600;
         }
 
         /* Modal */
@@ -255,361 +394,407 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
             background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            z-index: 200;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
         }
 
         .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            width: 100%;
+            max-height: 80vh;
+            padding: 20px;
+            padding-bottom: calc(20px + var(--sab));
+            animation: slideUp 0.3s;
         }
 
-        .modal-header {
-            margin-bottom: 20px;
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-handle {
+            width: 40px;
+            height: 4px;
+            background: #cbd5e0;
+            border-radius: 2px;
+            margin: 0 auto 20px;
         }
 
         .modal-title {
-            font-size: 1.5em;
-            color: #333;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 20px;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .form-label {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 6px;
             display: block;
-            margin-bottom: 5px;
-            color: #666;
+            font-weight: 600;
         }
 
         .form-input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: all 0.2s;
+            -webkit-appearance: none;
         }
 
-        .modal-footer {
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .modal-actions {
             display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 24px;
         }
 
         .btn {
-            padding: 10px 20px;
+            flex: 1;
+            padding: 14px;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
         }
 
         .btn-primary {
-            background: #667eea;
+            background: var(--primary);
             color: white;
         }
 
         .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
+            background: #e2e8f0;
+            color: var(--dark);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .role-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: calc(80px + var(--sat));
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 14px 20px;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 300;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); }
+            to { transform: translateX(-50%) translateY(0); }
+        }
+
+        .toast-icon {
+            font-size: 20px;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --dark: #f7fafc;
+                --light: #1a202c;
             }
 
-            .player-table {
-                font-size: 0.9em;
+            body {
+                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
             }
 
-            .price-input {
-                width: 60px;
+            .header,
+            .role-tabs-container,
+            .stat-card,
+            .slot-card,
+            .modal-content,
+            .bottom-nav {
+                background: rgba(45, 55, 72, 0.95);
+                color: #f7fafc;
             }
+
+            .role-tab {
+                background: #2d3748;
+                color: #f7fafc;
+            }
+
+            .player-item {
+                background: #2d3748;
+            }
+
+            .form-input {
+                background: #2d3748;
+                border-color: #4a5568;
+                color: #f7fafc;
+            }
+        }
+
+        /* Landscape Mode Adjustments */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            .header {
+                padding: 10px 20px;
+            }
+
+            .stats-container {
+                display: none;
+            }
+
+            .bottom-nav {
+                padding: 4px 0 var(--sab);
+            }
+
+            .modal-content {
+                max-height: 90vh;
+            }
+        }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Pull to Refresh */
+        .pull-to-refresh {
+            position: fixed;
+            top: var(--sat);
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%);
+            padding: 20px;
+            z-index: 50;
+            transition: transform 0.3s;
+        }
+
+        .pull-to-refresh.show {
+            transform: translateX(-50%) translateY(50px);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>⚽ Dashboard Asta Fantacalcio</h1>
-        
-        <!-- Control Bar -->
-        <div style="background: white; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-            <button onclick="saveState()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">💾 Salva</button>
-            <button onclick="loadState()" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer;">📂 Carica</button>
-            <button onclick="exportData()" style="padding: 10px 20px; background: #FF9800; color: white; border: none; border-radius: 5px; cursor: pointer;">⬇️ Esporta</button>
-            <label style="padding: 10px 20px; background: #9C27B0; color: white; border-radius: 5px; cursor: pointer;">
-                ⬆️ Importa
-                <input type="file" accept=".json" onchange="importData(event)" style="display: none;">
-            </label>
-            <button onclick="if(confirm('Sicuro di voler resettare tutto?')) location.reload()" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">🔄 Reset</button>
-        </div>
-        
-        <!-- Header Statistics -->
-        <div class="stats-header">
+    <!-- Pull to Refresh Indicator -->
+    <div class="pull-to-refresh" id="pullToRefresh">
+        <div class="loading"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1 class="header-title">
+            ⚽ Fantacalcio Manager
+        </h1>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-container">
+        <div class="stats-scroll">
             <div class="stat-card">
-                <div class="stat-label">Budget Totale</div>
+                <div class="stat-label">Budget</div>
                 <div class="stat-value" id="totalBudget">500</div>
                 <div class="stat-progress">
                     <div class="stat-progress-bar" id="budgetProgress" style="width: 0%"></div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Crediti Spesi</div>
+                <div class="stat-label">Spesi</div>
                 <div class="stat-value" id="spentCredits">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Crediti Rimanenti</div>
+                <div class="stat-label">Rimanenti</div>
                 <div class="stat-value" id="remainingCredits">500</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Giocatori Acquistati</div>
-                <div class="stat-value" id="playersBought">0 / 25</div>
-            </div>
-        </div>
-
-        <!-- Portieri Section -->
-        <div class="role-section" data-role="GK">
-            <div class="role-header">
-                <div class="role-title">🥅 Portieri (3)</div>
-                <div class="role-budget">
-                    <div class="budget-info">
-                        <div class="budget-label">Budget Allocato</div>
-                        <div class="budget-value">50 crediti (10%)</div>
-                    </div>
-                    <div class="budget-info">
-                        <div class="budget-label">Spesi</div>
-                        <div class="budget-value role-spent">0</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="slot-group">
-                <div class="slot-header">
-                    <div class="slot-title">
-                        Slot 1 - Portiere Titolare (25-30 crediti)
-                        <span class="alert-badge alert-warning">2 disponibili</span>
-                    </div>
-                    <div class="slot-controls">
-                        <button class="add-player-btn" onclick="openAddPlayerModal('GK', 1)">+ Aggiungi</button>
-                    </div>
-                </div>
-                <table class="player-table">
-                    <thead>
-                        <tr>
-                            <th>Giocatore</th>
-                            <th>Squadra</th>
-                            <th>Prezzo Medio</th>
-                            <th>Target</th>
-                            <th>Max (+5%)</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="gk-slot-1">
-                        <!-- Players will be added here dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Difensori Section -->
-        <div class="role-section" data-role="DEF">
-            <div class="role-header">
-                <div class="role-title">🛡️ Difensori (8)</div>
-                <div class="role-budget">
-                    <div class="budget-info">
-                        <div class="budget-label">Budget Allocato</div>
-                        <div class="budget-value">90 crediti (18%)</div>
-                    </div>
-                    <div class="budget-info">
-                        <div class="budget-label">Spesi</div>
-                        <div class="budget-value role-spent">0</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="slot-group">
-                <div class="slot-header">
-                    <div class="slot-title">
-                        Slot 1 - Difensore Top (23-27 crediti)
-                        <span class="alert-badge alert-good">5 disponibili</span>
-                    </div>
-                    <div class="slot-controls">
-                        <button class="add-player-btn" onclick="openAddPlayerModal('DEF', 1)">+ Aggiungi</button>
-                    </div>
-                </div>
-                <table class="player-table">
-                    <thead>
-                        <tr>
-                            <th>Giocatore</th>
-                            <th>Squadra</th>
-                            <th>Prezzo Medio</th>
-                            <th>Target</th>
-                            <th>Max (+5%)</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="def-slot-1">
-                        <!-- Players will be added here dynamically -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="slot-group">
-                <div class="slot-header">
-                    <div class="slot-title">
-                        Slot 2-3 - Difensori Medi (15-18 crediti)
-                        <span class="alert-badge alert-good">8 disponibili</span>
-                    </div>
-                    <div class="slot-controls">
-                        <button class="add-player-btn" onclick="openAddPlayerModal('DEF', 2)">+ Aggiungi</button>
-                    </div>
-                </div>
-                <table class="player-table">
-                    <thead>
-                        <tr>
-                            <th>Giocatore</th>
-                            <th>Squadra</th>
-                            <th>Prezzo Medio</th>
-                            <th>Target</th>
-                            <th>Max (+5%)</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="def-slot-2">
-                        <!-- Players will be added here dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Centrocampisti Section -->
-        <div class="role-section" data-role="MID">
-            <div class="role-header">
-                <div class="role-title">⚡ Centrocampisti (8)</div>
-                <div class="role-budget">
-                    <div class="budget-info">
-                        <div class="budget-label">Budget Allocato</div>
-                        <div class="budget-value">135 crediti (27%)</div>
-                    </div>
-                    <div class="budget-info">
-                        <div class="budget-label">Spesi</div>
-                        <div class="budget-value role-spent">0</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="slot-group">
-                <div class="slot-header">
-                    <div class="slot-title">
-                        Slot 1-2 - Top Players (30-35 crediti)
-                        <span class="alert-badge alert-warning">3 disponibili</span>
-                    </div>
-                    <div class="slot-controls">
-                        <button class="add-player-btn" onclick="openAddPlayerModal('MID', 1)">+ Aggiungi</button>
-                    </div>
-                </div>
-                <table class="player-table">
-                    <thead>
-                        <tr>
-                            <th>Giocatore</th>
-                            <th>Squadra</th>
-                            <th>Prezzo Medio</th>
-                            <th>Target</th>
-                            <th>Max (+5%)</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mid-slot-1">
-                        <!-- Players will be added here dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Attaccanti Section -->
-        <div class="role-section" data-role="ATT">
-            <div class="role-header">
-                <div class="role-title">⚔️ Attaccanti (6)</div>
-                <div class="role-budget">
-                    <div class="budget-info">
-                        <div class="budget-label">Budget Allocato</div>
-                        <div class="budget-value">225 crediti (45%)</div>
-                    </div>
-                    <div class="budget-info">
-                        <div class="budget-label">Spesi</div>
-                        <div class="budget-value role-spent">0</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="slot-group">
-                <div class="slot-header">
-                    <div class="slot-title">
-                        Slot 1 - Bomber Top (70-80 crediti)
-                        <span class="alert-badge alert-critical">1 disponibile!</span>
-                    </div>
-                    <div class="slot-controls">
-                        <button class="add-player-btn" onclick="openAddPlayerModal('ATT', 1)">+ Aggiungi</button>
-                    </div>
-                </div>
-                <table class="player-table">
-                    <thead>
-                        <tr>
-                            <th>Giocatore</th>
-                            <th>Squadra</th>
-                            <th>Prezzo Medio</th>
-                            <th>Target</th>
-                            <th>Max (+5%)</th>
-                            <th>Azioni</th>
-                        </tr>
-                    </thead>
-                    <tbody id="att-slot-1">
-                        <!-- Players will be added here dynamically -->
-                    </tbody>
-                </table>
+                <div class="stat-label">Acquistati</div>
+                <div class="stat-value" id="playersBought">0/25</div>
             </div>
         </div>
     </div>
 
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Role Tabs -->
+        <div class="role-tabs-container">
+            <div class="role-tabs" id="roleTabs">
+                <button class="role-tab active" onclick="switchRole('GK')">🥅 Portieri</button>
+                <button class="role-tab" onclick="switchRole('DEF')">🛡️ Difesa</button>
+                <button class="role-tab" onclick="switchRole('MID')">⚡ Centro</button>
+                <button class="role-tab" onclick="switchRole('ATT')">⚔️ Attacco</button>
+            </div>
+        </div>
+
+        <!-- Role Contents -->
+        <div id="roleContents" style="margin-top: 20px;">
+            <!-- Portieri -->
+            <div class="role-content active" id="content-GK">
+                <div class="slot-card">
+                    <div class="slot-header">
+                        <div class="slot-title">Titolare (25-30 cr)</div>
+                        <span class="slot-badge badge-warning">2 disp</span>
+                    </div>
+                    <div class="player-list" id="gk-slot-1">
+                        <!-- Players will be added here -->
+                    </div>
+                    <button class="action-btn btn-buy" style="width: 100%; margin-top: 12px;" 
+                            onclick="openAddModal('GK', 1)">+ Aggiungi Portiere</button>
+                </div>
+            </div>
+
+            <!-- Difensori -->
+            <div class="role-content" id="content-DEF">
+                <div class="slot-card">
+                    <div class="slot-header">
+                        <div class="slot-title">Top (23-27 cr)</div>
+                        <span class="slot-badge badge-good">5 disp</span>
+                    </div>
+                    <div class="player-list" id="def-slot-1">
+                        <!-- Players will be added here -->
+                    </div>
+                    <button class="action-btn btn-buy" style="width: 100%; margin-top: 12px;" 
+                            onclick="openAddModal('DEF', 1)">+ Aggiungi Difensore</button>
+                </div>
+
+                <div class="slot-card">
+                    <div class="slot-header">
+                        <div class="slot-title">Medi (15-18 cr)</div>
+                        <span class="slot-badge badge-good">8 disp</span>
+                    </div>
+                    <div class="player-list" id="def-slot-2">
+                        <!-- Players will be added here -->
+                    </div>
+                    <button class="action-btn btn-buy" style="width: 100%; margin-top: 12px;" 
+                            onclick="openAddModal('DEF', 2)">+ Aggiungi Difensore</button>
+                </div>
+            </div>
+
+            <!-- Centrocampisti -->
+            <div class="role-content" id="content-MID">
+                <div class="slot-card">
+                    <div class="slot-header">
+                        <div class="slot-title">Top (30-35 cr)</div>
+                        <span class="slot-badge badge-warning">3 disp</span>
+                    </div>
+                    <div class="player-list" id="mid-slot-1">
+                        <!-- Players will be added here -->
+                    </div>
+                    <button class="action-btn btn-buy" style="width: 100%; margin-top: 12px;" 
+                            onclick="openAddModal('MID', 1)">+ Aggiungi Centro</button>
+                </div>
+            </div>
+
+            <!-- Attaccanti -->
+            <div class="role-content" id="content-ATT">
+                <div class="slot-card">
+                    <div class="slot-header">
+                        <div class="slot-title">Bomber (70-80 cr)</div>
+                        <span class="slot-badge badge-critical">1 disp!</span>
+                    </div>
+                    <div class="player-list" id="att-slot-1">
+                        <!-- Players will be added here -->
+                    </div>
+                    <button class="action-btn btn-buy" style="width: 100%; margin-top: 12px;" 
+                            onclick="openAddModal('ATT', 1)">+ Aggiungi Attaccante</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAB -->
+    <button class="fab" onclick="showQuickActions()">
+        +
+    </button>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-items">
+            <button class="nav-item active" onclick="navTo('dashboard')">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Dashboard</div>
+            </button>
+            <button class="nav-item" onclick="navTo('squad')">
+                <div class="nav-icon">👥</div>
+                <div class="nav-label">Rosa</div>
+            </button>
+            <button class="nav-item" onclick="navTo('analytics')">
+                <div class="nav-icon">📈</div>
+                <div class="nav-label">Analisi</div>
+            </button>
+            <button class="nav-item" onclick="navTo('settings')">
+                <div class="nav-icon">⚙️</div>
+                <div class="nav-label">Altro</div>
+            </button>
+        </div>
+    </div>
+
     <!-- Add Player Modal -->
-    <div class="modal" id="addPlayerModal">
+    <div class="modal" id="addModal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Aggiungi Giocatore</h2>
+            <div class="modal-handle"></div>
+            <h2 class="modal-title">Aggiungi Giocatore</h2>
+            
+            <div class="form-group">
+                <label class="form-label">Nome</label>
+                <input type="text" class="form-input" id="playerName" placeholder="Es. Bremer">
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Nome Giocatore</label>
-                    <input type="text" class="form-input" id="playerName" placeholder="Es. Bremer">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Squadra</label>
-                    <input type="text" class="form-input" id="playerTeam" placeholder="Es. Juventus">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Prezzo Medio</label>
-                    <input type="number" class="form-input" id="avgPrice" placeholder="Es. 25">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Prezzo Target</label>
-                    <input type="number" class="form-input" id="targetPrice" placeholder="Es. 23">
-                </div>
+            
+            <div class="form-group">
+                <label class="form-label">Squadra</label>
+                <input type="text" class="form-input" id="playerTeam" placeholder="Es. Juventus">
             </div>
-            <div class="modal-footer">
+            
+            <div class="form-group">
+                <label class="form-label">Prezzo Medio</label>
+                <input type="number" class="form-input" id="avgPrice" placeholder="25">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Target</label>
+                <input type="number" class="form-input" id="targetPrice" placeholder="23">
+            </div>
+            
+            <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeModal()">Annulla</button>
                 <button class="btn btn-primary" onclick="addPlayer()">Aggiungi</button>
             </div>
@@ -617,60 +802,155 @@
     </div>
 
     <script>
-        // Global state
+        // Global State
         let appState = {
             totalBudget: 500,
             spentCredits: 0,
             playersBought: 0,
-            currentRole: '',
-            currentSlot: 0,
-            players: {
-                GK: { slot1: [], slot2: [], slot3: [] },
-                DEF: { slot1: [], slot2: [], slot3: [], slot4: [] },
-                MID: { slot1: [], slot2: [], slot3: [], slot4: [] },
-                ATT: { slot1: [], slot2: [], slot3: [] }
-            },
+            currentRole: 'GK',
+            currentSlot: 1,
+            players: {},
             purchased: []
         };
 
-        // Initialize with some example data
-        function initializeExampleData() {
-            // Example defenders for slot 1
-            const exampleDefenders = [
-                { name: 'Bremer', team: 'Juventus', avgPrice: 28, targetPrice: 25 },
-                { name: 'Di Lorenzo', team: 'Napoli', avgPrice: 26, targetPrice: 24 },
-                { name: 'Bastoni', team: 'Inter', avgPrice: 27, targetPrice: 25 },
-                { name: 'Buongiorno', team: 'Torino', avgPrice: 24, targetPrice: 22 },
-                { name: 'Bellanova', team: 'Torino', avgPrice: 22, targetPrice: 20 }
-            ];
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            initializeExampleData();
+            updateStats();
+            setupSwipeGestures();
+            setupPullToRefresh();
+        });
 
-            exampleDefenders.forEach(player => {
-                addPlayerToSlot('DEF', 1, player);
-            });
-
-            // Example midfielders
-            const exampleMidfielders = [
-                { name: 'Barella', team: 'Inter', avgPrice: 35, targetPrice: 32 },
-                { name: 'Kvaratskhelia', team: 'Napoli', avgPrice: 38, targetPrice: 35 },
-                { name: 'Chiesa', team: 'Juventus', avgPrice: 32, targetPrice: 30 }
-            ];
-
-            exampleMidfielders.forEach(player => {
-                addPlayerToSlot('MID', 1, player);
-            });
-
-            // Example striker
-            addPlayerToSlot('ATT', 1, { name: 'Osimhen', team: 'Napoli', avgPrice: 80, targetPrice: 75 });
+        // Storage Functions
+        function saveToStorage() {
+            try {
+                localStorage.setItem('fantacalcioState', JSON.stringify(appState));
+                showToast('Salvato!', 'success');
+            } catch (e) {
+                showToast('Errore salvataggio', 'error');
+            }
         }
 
-        function openAddPlayerModal(role, slot) {
+        function loadFromStorage() {
+            try {
+                const saved = localStorage.getItem('fantacalcioState');
+                if (saved) {
+                    appState = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('Error loading state:', e);
+            }
+        }
+
+        // Initialize Example Data
+        function initializeExampleData() {
+            const examples = {
+                DEF: [
+                    { name: 'Bremer', team: 'Juventus', avgPrice: 28, targetPrice: 25 },
+                    { name: 'Bastoni', team: 'Inter', avgPrice: 27, targetPrice: 25 },
+                    { name: 'Di Lorenzo', team: 'Napoli', avgPrice: 26, targetPrice: 24 }
+                ],
+                MID: [
+                    { name: 'Barella', team: 'Inter', avgPrice: 35, targetPrice: 32 },
+                    { name: 'Kvaratskhelia', team: 'Napoli', avgPrice: 38, targetPrice: 35 }
+                ],
+                ATT: [
+                    { name: 'Osimhen', team: 'Napoli', avgPrice: 80, targetPrice: 75 }
+                ]
+            };
+
+            Object.entries(examples).forEach(([role, players]) => {
+                players.forEach(player => {
+                    addPlayerToList(role, 1, player);
+                });
+            });
+        }
+
+        // Role Management
+        function switchRole(role) {
+            // Update tabs
+            document.querySelectorAll('.role-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.role-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`content-${role}`).classList.add('active');
+
+            appState.currentRole = role;
+        }
+
+        // Player Management
+        function addPlayerToList(role, slot, player) {
+            const listId = `${role.toLowerCase()}-slot-${slot}`;
+            const list = document.getElementById(listId);
+            if (!list) return;
+
+            const playerEl = document.createElement('div');
+            playerEl.className = 'player-item';
+            playerEl.id = `player-${role}-${slot}-${player.name.replace(/\s/g, '')}`;
+            
+            playerEl.innerHTML = `
+                <div class="player-info">
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-details">${player.team}</div>
+                </div>
+                <div class="player-prices">
+                    <div class="price-target">${player.targetPrice} cr</div>
+                    <div class="price-avg">${player.avgPrice} cr</div>
+                </div>
+                <div class="player-actions">
+                    <button class="action-btn btn-buy" onclick="buyPlayer('${role}', ${slot}, '${player.name}', ${player.targetPrice})">
+                        Compra
+                    </button>
+                    <button class="action-btn btn-remove" onclick="removePlayer('${role}', ${slot}, '${player.name}')">
+                        ×
+                    </button>
+                </div>
+            `;
+
+            list.appendChild(playerEl);
+        }
+
+        function buyPlayer(role, slot, name, price) {
+            if (appState.spentCredits + price > appState.totalBudget) {
+                showToast('Budget insufficiente!', 'error');
+                return;
+            }
+
+            appState.purchased.push({ role, name, price });
+            appState.spentCredits += price;
+            appState.playersBought++;
+            
+            updateStats();
+            removePlayer(role, slot, name);
+            showToast(`${name} acquistato per ${price} cr!`, 'success');
+            saveToStorage();
+        }
+
+        function removePlayer(role, slot, name) {
+            const playerId = `player-${role}-${slot}-${name.replace(/\s/g, '')}`;
+            const element = document.getElementById(playerId);
+            if (element) {
+                element.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => element.remove(), 300);
+            }
+        }
+
+        // Modal Management
+        function openAddModal(role, slot) {
             appState.currentRole = role;
             appState.currentSlot = slot;
-            document.getElementById('addPlayerModal').style.display = 'block';
+            document.getElementById('addModal').classList.add('show');
+            document.getElementById('playerName').focus();
         }
 
         function closeModal() {
-            document.getElementById('addPlayerModal').style.display = 'none';
+            document.getElementById('addModal').classList.remove('show');
             // Clear form
             document.getElementById('playerName').value = '';
             document.getElementById('playerTeam').value = '';
@@ -687,97 +967,387 @@
             };
 
             if (player.name && player.team && player.avgPrice && player.targetPrice) {
-                addPlayerToSlot(appState.currentRole, appState.currentSlot, player);
+                addPlayerToList(appState.currentRole, appState.currentSlot, player);
                 closeModal();
+                showToast('Giocatore aggiunto!', 'success');
+                saveToStorage();
             }
         }
 
-        function addPlayerToSlot(role, slot, player) {
-            const slotId = `${role.toLowerCase()}-slot-${slot}`;
-            const tbody = document.getElementById(slotId);
-            
-            const row = document.createElement('tr');
-            row.className = 'player-row';
-            row.id = `player-${role}-${slot}-${player.name.replace(/\s/g, '')}`;
-            
-            const maxPrice = Math.round(player.targetPrice * 1.05);
-            
-            row.innerHTML = `
-                <td class="player-name">${player.name}</td>
-                <td>${player.team}</td>
-                <td>${player.avgPrice}</td>
-                <td>${player.targetPrice}</td>
-                <td>${maxPrice}</td>
-                <td>
-                    <button class="action-btn buy-btn" onclick="buyPlayer('${role}', ${slot}, '${player.name}', ${player.targetPrice})">Acquista</button>
-                    <button class="action-btn remove-btn" onclick="removePlayer('${role}', ${slot}, '${player.name}')">Rimuovi</button>
-                </td>
-            `;
-            
-            tbody.appendChild(row);
-        }
-
-        function buyPlayer(role, slot, playerName, price) {
-            // Add to purchased list
-            appState.purchased.push({ role, playerName, price });
-            appState.spentCredits += price;
-            appState.playersBought++;
-            
-            // Update UI
-            updateStatistics();
-            
-            // Remove player from list
-            removePlayer(role, slot, playerName);
-            
-            // Show success message
-            showNotification(`${playerName} acquistato per ${price} crediti!`, 'success');
-        }
-
-        function removePlayer(role, slot, playerName) {
-            const playerId = `player-${role}-${slot}-${playerName.replace(/\s/g, '')}`;
-            const element = document.getElementById(playerId);
-            if (element) {
-                element.remove();
-            }
-        }
-
-        function updateStatistics() {
+        // Stats Update
+        function updateStats() {
             document.getElementById('spentCredits').textContent = appState.spentCredits;
             document.getElementById('remainingCredits').textContent = appState.totalBudget - appState.spentCredits;
-            document.getElementById('playersBought').textContent = `${appState.playersBought} / 25`;
+            document.getElementById('playersBought').textContent = `${appState.playersBought}/25`;
             
-            const progressPercent = (appState.spentCredits / appState.totalBudget) * 100;
-            document.getElementById('budgetProgress').style.width = progressPercent + '%';
+            const progress = (appState.spentCredits / appState.totalBudget) * 100;
+            document.getElementById('budgetProgress').style.width = `${progress}%`;
         }
 
-        function showNotification(message, type) {
-            // Simple notification - could be enhanced with a toast library
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 25px;
-                background: ${type === 'success' ? '#4CAF50' : '#f44336'};
-                color: white;
-                border-radius: 5px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-                z-index: 2000;
-                animation: slideIn 0.3s;
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">${type === 'success' ? '✓' : '⚠️'}</div>
+                <div>${message}</div>
             `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
+            
+            document.body.appendChild(toast);
             
             setTimeout(() => {
-                notification.remove();
+                toast.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeExampleData();
-            updateStatistics();
+        // Swipe Gestures
+        function setupSwipeGestures() {
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            const roleContents = document.getElementById('roleContents');
+            
+            roleContents.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            
+            roleContents.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+            
+            function handleSwipe() {
+                const swipeDistance = touchEndX - touchStartX;
+                if (Math.abs(swipeDistance) < 50) return;
+                
+                const roles = ['GK', 'DEF', 'MID', 'ATT'];
+                const currentIndex = roles.indexOf(appState.currentRole);
+                
+                if (swipeDistance > 0 && currentIndex > 0) {
+                    // Swipe right - previous role
+                    switchRoleByIndex(currentIndex - 1);
+                } else if (swipeDistance < 0 && currentIndex < roles.length - 1) {
+                    // Swipe left - next role
+                    switchRoleByIndex(currentIndex + 1);
+                }
+            }
+            
+            function switchRoleByIndex(index) {
+                const roles = ['GK', 'DEF', 'MID', 'ATT'];
+                const tabs = document.querySelectorAll('.role-tab');
+                tabs[index].click();
+                
+                // Scroll tab into view
+                tabs[index].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        }
+
+        // Pull to Refresh
+        function setupPullToRefresh() {
+            let startY = 0;
+            let isPulling = false;
+            
+            document.addEventListener('touchstart', e => {
+                if (window.scrollY === 0) {
+                    startY = e.touches[0].pageY;
+                    isPulling = true;
+                }
+            });
+            
+            document.addEventListener('touchmove', e => {
+                if (!isPulling) return;
+                
+                const pullDistance = e.touches[0].pageY - startY;
+                
+                if (pullDistance > 50) {
+                    document.getElementById('pullToRefresh').classList.add('show');
+                }
+            });
+            
+            document.addEventListener('touchend', e => {
+                if (document.getElementById('pullToRefresh').classList.contains('show')) {
+                    setTimeout(() => {
+                        document.getElementById('pullToRefresh').classList.remove('show');
+                        loadFromStorage();
+                        updateStats();
+                        showToast('Aggiornato!', 'success');
+                    }, 1000);
+                }
+                isPulling = false;
+            });
+        }
+
+        // Navigation
+        function navTo(section) {
+            // Update active nav
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+            
+            // Handle navigation
+            switch(section) {
+                case 'squad':
+                    showSquadSummary();
+                    break;
+                case 'analytics':
+                    showAnalytics();
+                    break;
+                case 'settings':
+                    showSettings();
+                    break;
+                default:
+                    // Stay on dashboard
+                    break;
+            }
+        }
+
+        // Quick Actions
+        function showQuickActions() {
+            const actions = [
+                { icon: '💾', label: 'Salva', action: saveToStorage },
+                { icon: '📥', label: 'Importa', action: () => document.querySelector('input[type="file"]')?.click() },
+                { icon: '📤', label: 'Esporta', action: exportData },
+                { icon: '🔄', label: 'Reset', action: () => confirm('Resettare tutto?') && location.reload() }
+            ];
+            
+            // Create action sheet
+            const sheet = document.createElement('div');
+            sheet.className = 'modal show';
+            sheet.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-handle"></div>
+                    <h2 class="modal-title">Azioni Rapide</h2>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        ${actions.map(a => `
+                            <button class="btn btn-secondary" onclick="(${a.action})(); this.closest('.modal').remove();">
+                                <div style="font-size: 24px; margin-bottom: 4px;">${a.icon}</div>
+                                <div style="font-size: 0.85rem;">${a.label}</div>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            sheet.addEventListener('click', e => {
+                if (e.target === sheet) sheet.remove();
+            });
+            
+            document.body.appendChild(sheet);
+        }
+
+        // Export/Import
+        function exportData() {
+            const dataStr = JSON.stringify(appState, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `fantacalcio_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            showToast('Dati esportati!', 'success');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        appState = JSON.parse(e.target.result);
+                        saveToStorage();
+                        location.reload();
+                    } catch (error) {
+                        showToast('Errore importazione', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Squad Summary
+        function showSquadSummary() {
+            const summary = {
+                GK: appState.purchased.filter(p => p.role === 'GK'),
+                DEF: appState.purchased.filter(p => p.role === 'DEF'),
+                MID: appState.purchased.filter(p => p.role === 'MID'),
+                ATT: appState.purchased.filter(p => p.role === 'ATT')
+            };
+            
+            const content = `
+                <div style="padding: 20px;">
+                    <h2 style="margin-bottom: 20px;">La Tua Rosa</h2>
+                    ${Object.entries(summary).map(([role, players]) => `
+                        <div class="slot-card">
+                            <h3>${role} (${players.length})</h3>
+                            ${players.map(p => `
+                                <div class="player-item">
+                                    <div class="player-info">
+                                        <div class="player-name">${p.name}</div>
+                                    </div>
+                                    <div class="price-target">${p.price} cr</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            showModal('Rosa Completa', content);
+        }
+
+        // Analytics
+        function showAnalytics() {
+            const avgPrices = {
+                GK: Math.round(appState.purchased.filter(p => p.role === 'GK').reduce((a,b) => a + b.price, 0) / 3) || 0,
+                DEF: Math.round(appState.purchased.filter(p => p.role === 'DEF').reduce((a,b) => a + b.price, 0) / 8) || 0,
+                MID: Math.round(appState.purchased.filter(p => p.role === 'MID').reduce((a,b) => a + b.price, 0) / 8) || 0,
+                ATT: Math.round(appState.purchased.filter(p => p.role === 'ATT').reduce((a,b) => a + b.price, 0) / 6) || 0
+            };
+            
+            const content = `
+                <div style="padding: 20px;">
+                    <h2 style="margin-bottom: 20px;">Analisi Spesa</h2>
+                    <div class="stat-card">
+                        <div class="stat-label">Spesa Media per Ruolo</div>
+                        ${Object.entries(avgPrices).map(([role, avg]) => `
+                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                                <span>${role}</span>
+                                <strong>${avg} cr</strong>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="stat-card" style="margin-top: 12px;">
+                        <div class="stat-label">Efficienza Budget</div>
+                        <div class="stat-value">${Math.round((appState.spentCredits / appState.totalBudget) * 100)}%</div>
+                        <div class="stat-progress">
+                            <div class="stat-progress-bar" style="width: ${(appState.spentCredits / appState.totalBudget) * 100}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            showModal('Analytics', content);
+        }
+
+        // Settings
+        function showSettings() {
+            const content = `
+                <div style="padding: 20px;">
+                    <h2 style="margin-bottom: 20px;">Impostazioni</h2>
+                    <div class="form-group">
+                        <label class="form-label">Budget Totale</label>
+                        <input type="number" class="form-input" value="${appState.totalBudget}" 
+                               onchange="appState.totalBudget = parseInt(this.value); updateStats(); saveToStorage();">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveToStorage()">Salva Impostazioni</button>
+                    <button class="btn btn-secondary" style="margin-top: 12px;" 
+                            onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }">
+                        Reset Completo
+                    </button>
+                </div>
+            `;
+            
+            showModal('Impostazioni', content);
+        }
+
+        // Generic Modal
+        function showModal(title, content) {
+            const modal = document.createElement('div');
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-handle"></div>
+                    <h2 class="modal-title">${title}</h2>
+                    ${content}
+                    <button class="btn btn-primary" style="margin-top: 20px;" 
+                            onclick="this.closest('.modal').remove()">Chiudi</button>
+                </div>
+            `;
+            
+            modal.addEventListener('click', e => {
+                if (e.target === modal) modal.remove();
+            });
+            
+            document.body.appendChild(modal);
+        }
+
+        // PWA Support
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                // Inline service worker fallback
+                const sw = `
+                    self.addEventListener('install', e => {
+                        e.waitUntil(
+                            caches.open('fantacalcio-v1').then(cache => {
+                                return cache.addAll(['/']);
+                            })
+                        );
+                    });
+                    
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(
+                            fetch(e.request).catch(() => caches.match(e.request))
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([sw], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl);
+            });
+        }
+
+        // Add to Home Screen prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button
+            setTimeout(() => {
+                if (deferredPrompt) {
+                    showToast('📲 Aggiungi alla Home per accesso rapido!', 'info');
+                }
+            }, 5000);
         });
+
+        // iOS specific optimizations
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+            // Prevent bounce scrolling
+            document.body.addEventListener('touchmove', e => {
+                if (e.target.closest('.stats-scroll, .role-tabs')) return;
+                if (document.body.scrollHeight <= window.innerHeight) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            // Add haptic feedback (if supported)
+            if ('vibrate' in navigator) {
+                document.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => navigator.vibrate(10));
+                });
+            }
+        }
+
+        // Keyboard handling for inputs
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('focus', () => {
+                setTimeout(() => {
+                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            });
+        });
+
+        // Add CSS animation for fadeOut
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                to { opacity: 0; transform: translateX(100px); }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
