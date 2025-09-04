@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Asta Fantacalcio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Header Stats */
+        .stats-header {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-progress {
+            margin-top: 10px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .stat-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.5s;
+        }
+
+        /* Role Sections */
+        .role-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .role-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .role-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .role-budget {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .budget-info {
+            text-align: right;
+        }
+
+        .budget-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .budget-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Slot Groups */
+        .slot-group {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .slot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .slot-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .slot-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-player-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .add-player-btn:hover {
+            background: #45a049;
+        }
+
+        /* Player Table */
+        .player-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .player-table th {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .player-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .player-row {
+            transition: background 0.3s;
+        }
+
+        .player-row:hover {
+            background: #f0f0f0;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .price-input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            margin: 0 2px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .buy-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .remove-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* Alert Badges */
+        .alert-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .alert-critical {
+            background: #ff4444;
+            color: white;
+        }
+
+        .alert-warning {
+            background: #ffaa00;
+            color: white;
+        }
+
+        .alert-good {
+            background: #00C851;
+            color: white;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .role-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .player-table {
+                font-size: 0.9em;
+            }
+
+            .price-input {
+                width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚽ Dashboard Asta Fantacalcio</h1>
+        
+        <!-- Control Bar -->
+        <div style="background: white; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <button onclick="saveState()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">💾 Salva</button>
+            <button onclick="loadState()" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer;">📂 Carica</button>
+            <button onclick="exportData()" style="padding: 10px 20px; background: #FF9800; color: white; border: none; border-radius: 5px; cursor: pointer;">⬇️ Esporta</button>
+            <label style="padding: 10px 20px; background: #9C27B0; color: white; border-radius: 5px; cursor: pointer;">
+                ⬆️ Importa
+                <input type="file" accept=".json" onchange="importData(event)" style="display: none;">
+            </label>
+            <button onclick="if(confirm('Sicuro di voler resettare tutto?')) location.reload()" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">🔄 Reset</button>
+        </div>
+        
+        <!-- Header Statistics -->
+        <div class="stats-header">
+            <div class="stat-card">
+                <div class="stat-label">Budget Totale</div>
+                <div class="stat-value" id="totalBudget">500</div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" id="budgetProgress" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Crediti Spesi</div>
+                <div class="stat-value" id="spentCredits">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Crediti Rimanenti</div>
+                <div class="stat-value" id="remainingCredits">500</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Giocatori Acquistati</div>
+                <div class="stat-value" id="playersBought">0 / 25</div>
+            </div>
+        </div>
+
+        <!-- Portieri Section -->
+        <div class="role-section" data-role="GK">
+            <div class="role-header">
+                <div class="role-title">🥅 Portieri (3)</div>
+                <div class="role-budget">
+                    <div class="budget-info">
+                        <div class="budget-label">Budget Allocato</div>
+                        <div class="budget-value">50 crediti (10%)</div>
+                    </div>
+                    <div class="budget-info">
+                        <div class="budget-label">Spesi</div>
+                        <div class="budget-value role-spent">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slot-group">
+                <div class="slot-header">
+                    <div class="slot-title">
+                        Slot 1 - Portiere Titolare (25-30 crediti)
+                        <span class="alert-badge alert-warning">2 disponibili</span>
+                    </div>
+                    <div class="slot-controls">
+                        <button class="add-player-btn" onclick="openAddPlayerModal('GK', 1)">+ Aggiungi</button>
+                    </div>
+                </div>
+                <table class="player-table">
+                    <thead>
+                        <tr>
+                            <th>Giocatore</th>
+                            <th>Squadra</th>
+                            <th>Prezzo Medio</th>
+                            <th>Target</th>
+                            <th>Max (+5%)</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gk-slot-1">
+                        <!-- Players will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Difensori Section -->
+        <div class="role-section" data-role="DEF">
+            <div class="role-header">
+                <div class="role-title">🛡️ Difensori (8)</div>
+                <div class="role-budget">
+                    <div class="budget-info">
+                        <div class="budget-label">Budget Allocato</div>
+                        <div class="budget-value">90 crediti (18%)</div>
+                    </div>
+                    <div class="budget-info">
+                        <div class="budget-label">Spesi</div>
+                        <div class="budget-value role-spent">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slot-group">
+                <div class="slot-header">
+                    <div class="slot-title">
+                        Slot 1 - Difensore Top (23-27 crediti)
+                        <span class="alert-badge alert-good">5 disponibili</span>
+                    </div>
+                    <div class="slot-controls">
+                        <button class="add-player-btn" onclick="openAddPlayerModal('DEF', 1)">+ Aggiungi</button>
+                    </div>
+                </div>
+                <table class="player-table">
+                    <thead>
+                        <tr>
+                            <th>Giocatore</th>
+                            <th>Squadra</th>
+                            <th>Prezzo Medio</th>
+                            <th>Target</th>
+                            <th>Max (+5%)</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="def-slot-1">
+                        <!-- Players will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="slot-group">
+                <div class="slot-header">
+                    <div class="slot-title">
+                        Slot 2-3 - Difensori Medi (15-18 crediti)
+                        <span class="alert-badge alert-good">8 disponibili</span>
+                    </div>
+                    <div class="slot-controls">
+                        <button class="add-player-btn" onclick="openAddPlayerModal('DEF', 2)">+ Aggiungi</button>
+                    </div>
+                </div>
+                <table class="player-table">
+                    <thead>
+                        <tr>
+                            <th>Giocatore</th>
+                            <th>Squadra</th>
+                            <th>Prezzo Medio</th>
+                            <th>Target</th>
+                            <th>Max (+5%)</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="def-slot-2">
+                        <!-- Players will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Centrocampisti Section -->
+        <div class="role-section" data-role="MID">
+            <div class="role-header">
+                <div class="role-title">⚡ Centrocampisti (8)</div>
+                <div class="role-budget">
+                    <div class="budget-info">
+                        <div class="budget-label">Budget Allocato</div>
+                        <div class="budget-value">135 crediti (27%)</div>
+                    </div>
+                    <div class="budget-info">
+                        <div class="budget-label">Spesi</div>
+                        <div class="budget-value role-spent">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slot-group">
+                <div class="slot-header">
+                    <div class="slot-title">
+                        Slot 1-2 - Top Players (30-35 crediti)
+                        <span class="alert-badge alert-warning">3 disponibili</span>
+                    </div>
+                    <div class="slot-controls">
+                        <button class="add-player-btn" onclick="openAddPlayerModal('MID', 1)">+ Aggiungi</button>
+                    </div>
+                </div>
+                <table class="player-table">
+                    <thead>
+                        <tr>
+                            <th>Giocatore</th>
+                            <th>Squadra</th>
+                            <th>Prezzo Medio</th>
+                            <th>Target</th>
+                            <th>Max (+5%)</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mid-slot-1">
+                        <!-- Players will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Attaccanti Section -->
+        <div class="role-section" data-role="ATT">
+            <div class="role-header">
+                <div class="role-title">⚔️ Attaccanti (6)</div>
+                <div class="role-budget">
+                    <div class="budget-info">
+                        <div class="budget-label">Budget Allocato</div>
+                        <div class="budget-value">225 crediti (45%)</div>
+                    </div>
+                    <div class="budget-info">
+                        <div class="budget-label">Spesi</div>
+                        <div class="budget-value role-spent">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slot-group">
+                <div class="slot-header">
+                    <div class="slot-title">
+                        Slot 1 - Bomber Top (70-80 crediti)
+                        <span class="alert-badge alert-critical">1 disponibile!</span>
+                    </div>
+                    <div class="slot-controls">
+                        <button class="add-player-btn" onclick="openAddPlayerModal('ATT', 1)">+ Aggiungi</button>
+                    </div>
+                </div>
+                <table class="player-table">
+                    <thead>
+                        <tr>
+                            <th>Giocatore</th>
+                            <th>Squadra</th>
+                            <th>Prezzo Medio</th>
+                            <th>Target</th>
+                            <th>Max (+5%)</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="att-slot-1">
+                        <!-- Players will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Player Modal -->
+    <div class="modal" id="addPlayerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Aggiungi Giocatore</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nome Giocatore</label>
+                    <input type="text" class="form-input" id="playerName" placeholder="Es. Bremer">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Squadra</label>
+                    <input type="text" class="form-input" id="playerTeam" placeholder="Es. Juventus">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prezzo Medio</label>
+                    <input type="number" class="form-input" id="avgPrice" placeholder="Es. 25">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prezzo Target</label>
+                    <input type="number" class="form-input" id="targetPrice" placeholder="Es. 23">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+                <button class="btn btn-primary" onclick="addPlayer()">Aggiungi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let appState = {
+            totalBudget: 500,
+            spentCredits: 0,
+            playersBought: 0,
+            currentRole: '',
+            currentSlot: 0,
+            players: {
+                GK: { slot1: [], slot2: [], slot3: [] },
+                DEF: { slot1: [], slot2: [], slot3: [], slot4: [] },
+                MID: { slot1: [], slot2: [], slot3: [], slot4: [] },
+                ATT: { slot1: [], slot2: [], slot3: [] }
+            },
+            purchased: []
+        };
+
+        // Initialize with some example data
+        function initializeExampleData() {
+            // Example defenders for slot 1
+            const exampleDefenders = [
+                { name: 'Bremer', team: 'Juventus', avgPrice: 28, targetPrice: 25 },
+                { name: 'Di Lorenzo', team: 'Napoli', avgPrice: 26, targetPrice: 24 },
+                { name: 'Bastoni', team: 'Inter', avgPrice: 27, targetPrice: 25 },
+                { name: 'Buongiorno', team: 'Torino', avgPrice: 24, targetPrice: 22 },
+                { name: 'Bellanova', team: 'Torino', avgPrice: 22, targetPrice: 20 }
+            ];
+
+            exampleDefenders.forEach(player => {
+                addPlayerToSlot('DEF', 1, player);
+            });
+
+            // Example midfielders
+            const exampleMidfielders = [
+                { name: 'Barella', team: 'Inter', avgPrice: 35, targetPrice: 32 },
+                { name: 'Kvaratskhelia', team: 'Napoli', avgPrice: 38, targetPrice: 35 },
+                { name: 'Chiesa', team: 'Juventus', avgPrice: 32, targetPrice: 30 }
+            ];
+
+            exampleMidfielders.forEach(player => {
+                addPlayerToSlot('MID', 1, player);
+            });
+
+            // Example striker
+            addPlayerToSlot('ATT', 1, { name: 'Osimhen', team: 'Napoli', avgPrice: 80, targetPrice: 75 });
+        }
+
+        function openAddPlayerModal(role, slot) {
+            appState.currentRole = role;
+            appState.currentSlot = slot;
+            document.getElementById('addPlayerModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('addPlayerModal').style.display = 'none';
+            // Clear form
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerTeam').value = '';
+            document.getElementById('avgPrice').value = '';
+            document.getElementById('targetPrice').value = '';
+        }
+
+        function addPlayer() {
+            const player = {
+                name: document.getElementById('playerName').value,
+                team: document.getElementById('playerTeam').value,
+                avgPrice: parseInt(document.getElementById('avgPrice').value),
+                targetPrice: parseInt(document.getElementById('targetPrice').value)
+            };
+
+            if (player.name && player.team && player.avgPrice && player.targetPrice) {
+                addPlayerToSlot(appState.currentRole, appState.currentSlot, player);
+                closeModal();
+            }
+        }
+
+        function addPlayerToSlot(role, slot, player) {
+            const slotId = `${role.toLowerCase()}-slot-${slot}`;
+            const tbody = document.getElementById(slotId);
+            
+            const row = document.createElement('tr');
+            row.className = 'player-row';
+            row.id = `player-${role}-${slot}-${player.name.replace(/\s/g, '')}`;
+            
+            const maxPrice = Math.round(player.targetPrice * 1.05);
+            
+            row.innerHTML = `
+                <td class="player-name">${player.name}</td>
+                <td>${player.team}</td>
+                <td>${player.avgPrice}</td>
+                <td>${player.targetPrice}</td>
+                <td>${maxPrice}</td>
+                <td>
+                    <button class="action-btn buy-btn" onclick="buyPlayer('${role}', ${slot}, '${player.name}', ${player.targetPrice})">Acquista</button>
+                    <button class="action-btn remove-btn" onclick="removePlayer('${role}', ${slot}, '${player.name}')">Rimuovi</button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        }
+
+        function buyPlayer(role, slot, playerName, price) {
+            // Add to purchased list
+            appState.purchased.push({ role, playerName, price });
+            appState.spentCredits += price;
+            appState.playersBought++;
+            
+            // Update UI
+            updateStatistics();
+            
+            // Remove player from list
+            removePlayer(role, slot, playerName);
+            
+            // Show success message
+            showNotification(`${playerName} acquistato per ${price} crediti!`, 'success');
+        }
+
+        function removePlayer(role, slot, playerName) {
+            const playerId = `player-${role}-${slot}-${playerName.replace(/\s/g, '')}`;
+            const element = document.getElementById(playerId);
+            if (element) {
+                element.remove();
+            }
+        }
+
+        function updateStatistics() {
+            document.getElementById('spentCredits').textContent = appState.spentCredits;
+            document.getElementById('remainingCredits').textContent = appState.totalBudget - appState.spentCredits;
+            document.getElementById('playersBought').textContent = `${appState.playersBought} / 25`;
+            
+            const progressPercent = (appState.spentCredits / appState.totalBudget) * 100;
+            document.getElementById('budgetProgress').style.width = progressPercent + '%';
+        }
+
+        function showNotification(message, type) {
+            // Simple notification - could be enhanced with a toast library
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+                color: white;
+                border-radius: 5px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 2000;
+                animation: slideIn 0.3s;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeExampleData();
+            updateStatistics();
+        });
+    </script>
+</body>
+</html>
