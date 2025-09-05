@@ -1,4 +1,208 @@
-<!DOCTYPE html>
+// Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            initializeDatabase();
+            updateStats();
+            setupSwipeGestures();
+            setupPullToRefresh();
+            setupSearch();
+        });
+
+        // Initialize Database with decoded players
+        function initializeDatabase() {
+            // Clear existing lists
+            ['gk-slot-1', 'def-slot-1', 'def-slot-2', 'mid-slot-1', 'att-slot-1'].forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) elem.innerHTML = '';
+            });
+
+            // Add top players from database
+            const topPlayers = {
+                'GK': PLAYERS_DB.P.slice(0, 5).map(p => decodePlayer(p, 'P')),
+                'DEF': PLAYERS_DB.D.slice(0, 5).map(p => decodePlayer(p, 'D')),
+                'MID': PLAYERS_DB.C.slice(0, 5).map(p => decodePlayer(p, 'C')),
+                'ATT': PLAYERS_DB.A.slice(0, 5).map(p => decodePlayer(p, 'A'))
+            };
+
+            // Populate initial lists
+            topPlayers.GK.forEach(p => addPlayerToList('GK', 1, formatPlayer(p)));
+            topPlayers.DEF.slice(0, 3).forEach(p => addPlayerToList('DEF', 1, formatPlayer(p)));
+            topPlayers.DEF.slice(3).forEach(p => addPlayerToList('DEF', 2, formatPlayer(p)));
+            topPlayers.MID.forEach(p => addPlayerToList('MID', 1, formatPlayer(p)));
+            topPlayers.ATT.forEach(p => addPlayerToList('ATT', 1, formatPlayer(p)));
+        }
+
+        // Format player for display
+        function formatPlayer(p) {
+            return {
+                name: p.nome,
+                team: p.team,
+                avgPrice: p.prezzi.avg,
+                targetPrice: Math.round(p.prezzi.avg * 0.95),
+                minPrice: p.prezzi.min,
+                maxPrice: p.prezzi.max,
+                stats: p.stats,
+                advanced: p.advanced,
+                fascia: p.fascia
+            };
+        }
+
+        // Setup Search functionality
+        function setupSearch() {
+            // Add search UI after header
+            const searchHTML = `
+                <div style="background: white; margin: 0 20px 20px; padding: 12px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <input type="text" id="playerSearch" placeholder="🔍 Cerca giocatore..." 
+                           style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    <div id="searchResults" style="margin-top: 10px; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+            `;
+            
+            const header = document.querySelector('.header');
+            header.insertAdjacentHTML('afterend', searchHTML);
+            
+            // Setup search listeners
+            const searchInput = document.getElementById('playerSearch');
+            searchInput.addEventListener('input', debounce(performSearch, 300));
+        }
+
+        // Perform search across all players
+        function performSearch(event) {
+            const query = event.target.value.toLowerCase();
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (query.length < 2) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+            
+            const allPlayers = [
+                ...PLAYERS_DB.P.map(p => ({...decodePlayer(p, 'P'), role: 'P'})),
+                ...PLAYERS_DB.D.map(p => ({...decodePlayer(p, 'D'), role: 'D'})),
+                ...PLAYERS_DB.C.map(p => ({...decodePlayer(p, 'C'), role: 'C'})),
+                ...PLAYERS_DB.A.map(p => ({...decodePlayer(p, 'A'), role: 'A'}))
+            ];
+            
+            const results = allPlayers
+                .filter(p => p.nome.toLowerCase().includes(query) || p.team.toLowerCase().includes(query))
+                .slice(0, 10);
+            
+            resultsDiv.innerHTML = results.map(p => `
+                <div style="padding: 8px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;"
+                     onclick="addSearchedPlayer('${p.ruolo}', '${p.nome}')">
+                    <div>
+                        <strong>${p.nome}</strong> (${p.team})
+                        <div style="font-size: 0.8rem; color: #718096;">
+                            ${p.ruolo} • ${p.prezzi.avg} cr • ${renderStars(p.stats.titolarita)}
+                        </div>
+                    </div>
+                    <button class="action-btn btn-buy" style="padding: 6px 12px; font-size: 0.8rem;">
+                        + Aggiungi
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Render stars for stats
+        function renderStars(value) {
+            const fullStars = Math.floor(value);
+            const halfStar = value % 1 >= 0.5 ? 1 : 0;
+            const emptyStars = 5 - fullStars - halfStar;
+            
+            return '★'.repeat(fullStars) + (halfStar ? '☆' : '') + '☆'.repeat(emptyStars);
+        }
+
+        // Add searched player to appropriate slot
+        function addSearchedPlayer(ruolo, nome) {
+            const roleMap = { 'P': 'GK', 'D': 'DEF', 'C': 'MID', 'A': 'ATT' };
+            const role = roleMap[ruolo];
+            
+            // Find player in database
+            const dbKey = ruolo === 'P' ? 'P' : ruolo;
+            const playerData = PLAYERS_DB[dbKey].find(p => p[0] === nome);
+            
+            if (playerData) {
+                const player = decodePlayer(playerData, ruolo);
+                addPlayerToList(role, 1, formatPlayer(player));
+                showToast(`${nome} aggiunto!`, 'success');
+                document.getElementById('playerSearch').value = '';
+                document.getElementById('searchResults').innerHTML = '';
+            }
+        }
+
+        // Debounce helper
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Enhanced addPlayerToList with stats display
+        function addPlayerToList(role, slot, player) {
+            const listId = `${role.toLowerCase()}-slot-${slot}`;
+            const list = document.getElementById(listId);
+            if (!list) return;
+
+            const playerEl = document.createElement('div');
+            playerEl.className = 'player-item';
+            playerEl.id = `player-${role}-${slot}-${player.name.replace(/\s/g, '')}`;
+            
+            // Calculate smart price
+            const smartPrice = calculateSmartPrice(player);
+            
+            playerEl.innerHTML = `
+                <div class="player-info" style="flex: 1;">
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-details">${player.team} • ${player.fascia || 'Med'}</div>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <span style="font-size: 0.7rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">
+                            T: ${renderStars(player.stats?.titolarita || 3)}
+                        </span>
+                        <span style="font-size: 0.7rem; background: #e8f5e9; padding: 2px 6px; border-radius: 4px;">
+                            ${player.advanced?.gol || 0}G ${player.advanced?.ass || 0}A
+                        </span>
+                    </div>
+                </div>
+                <div class="player-prices">
+                    <div class="price-target" style="color: ${smartPrice.color}">
+                        ${smartPrice.suggested} cr
+                        ${smartPrice.isOpportunity ? '🔥' : ''}
+                    </div>
+                    <div class="price-avg" style="font-size: 0.7rem;">
+                        ${player.minPrice}-${player.maxPrice}
+                    </div>
+                    <div style="font-size: 0.65rem; color: ${smartPrice.confidence > 70 ? '#4CAF50' : '#ff9800'};">
+                        ${smartPrice.confidence}% confidence
+                    </div>
+                </div>
+                <div class="player-actions">
+                    <button class="action-btn btn-buy" onclick="buyPlayer('${role}', ${slot}, '${player.name}', ${smartPrice.suggested})">
+                        Compra
+                    </button>
+                    <button class="action-btn btn-remove" onclick="removePlayer('${role}', ${slot}, '${player.name}')">
+                        ×
+                    </button>
+                </div>
+            `;
+
+            list.appendChild(playerEl);
+        }
+
+        // Smart pricing algorithm
+        function calculateSmartPrice(player) {
+            // Base price from average
+            let basePrice = player.avgPrice || player.targetPrice;
+            
+            // Factors
+            const factors = {
+                titolarita: (player.stats?.titolarita || 3) / 5,
+                affidabilita: (player.stats?.affidabilita || 3) / 5,<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -1166,7 +1370,7 @@
             }
         }
 
-        // Squad Summary
+        // Enhanced Squad Summary with database info
         function showSquadSummary() {
             const summary = {
                 GK: appState.purchased.filter(p => p.role === 'GK'),
@@ -1175,54 +1379,125 @@
                 ATT: appState.purchased.filter(p => p.role === 'ATT')
             };
             
+            const totalValue = appState.purchased.reduce((sum, p) => sum + p.price, 0);
+            const avgValue = totalValue / Math.max(1, appState.purchased.length);
+            
             const content = `
                 <div style="padding: 20px;">
-                    <h2 style="margin-bottom: 20px;">La Tua Rosa</h2>
+                    <h2 style="margin-bottom: 20px;">La Tua Rosa (${appState.purchased.length}/25)</h2>
+                    
+                    <div class="stat-card" style="margin-bottom: 20px;">
+                        <div class="stat-label">Valore Totale</div>
+                        <div class="stat-value">${totalValue} cr</div>
+                        <div class="stat-progress">
+                            <div class="stat-progress-bar" style="width: ${(totalValue/500)*100}%"></div>
+                        </div>
+                    </div>
+                    
                     ${Object.entries(summary).map(([role, players]) => `
                         <div class="slot-card">
-                            <h3>${role} (${players.length})</h3>
-                            ${players.map(p => `
-                                <div class="player-item">
+                            <h3 style="margin-bottom: 12px;">
+                                ${role === 'GK' ? '🥅' : role === 'DEF' ? '🛡️' : role === 'MID' ? '⚡' : '⚔️'} 
+                                ${role} (${players.length}/${role === 'GK' ? 3 : role === 'DEF' || role === 'MID' ? 8 : 6})
+                            </h3>
+                            ${players.length === 0 ? '<p style="color: #718096;">Nessun giocatore</p>' : 
+                              players.map(p => `
+                                <div class="player-item" style="margin-bottom: 8px;">
                                     <div class="player-info">
                                         <div class="player-name">${p.name}</div>
+                                        <div class="player-details" style="font-size: 0.8rem;">${p.team || 'N/A'}</div>
                                     </div>
                                     <div class="price-target">${p.price} cr</div>
                                 </div>
                             `).join('')}
                         </div>
                     `).join('')}
+                    
+                    <button class="btn btn-primary" style="margin-top: 20px; width: 100%;" 
+                            onclick="exportSquad()">📤 Esporta Rosa</button>
                 </div>
             `;
             
             showModal('Rosa Completa', content);
         }
 
-        // Analytics
+        // Export squad to text/json
+        function exportSquad() {
+            const squadText = appState.purchased.map(p => 
+                `${p.name} (${p.team || 'N/A'}) - ${p.role} - ${p.price} cr`
+            ).join('\n');
+            
+            const blob = new Blob([squadText], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `rosa_fantacalcio_${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            
+            showToast('Rosa esportata!', 'success');
+        }
+
+        // Enhanced Analytics with insights
         function showAnalytics() {
-            const avgPrices = {
-                GK: Math.round(appState.purchased.filter(p => p.role === 'GK').reduce((a,b) => a + b.price, 0) / 3) || 0,
-                DEF: Math.round(appState.purchased.filter(p => p.role === 'DEF').reduce((a,b) => a + b.price, 0) / 8) || 0,
-                MID: Math.round(appState.purchased.filter(p => p.role === 'MID').reduce((a,b) => a + b.price, 0) / 8) || 0,
-                ATT: Math.round(appState.purchased.filter(p => p.role === 'ATT').reduce((a,b) => a + b.price, 0) / 6) || 0
-            };
+            const roleStats = {};
+            ['GK', 'DEF', 'MID', 'ATT'].forEach(role => {
+                const players = appState.purchased.filter(p => p.role === role);
+                const spent = players.reduce((sum, p) => sum + p.price, 0);
+                const target = role === 'GK' ? 50 : role === 'DEF' ? 90 : role === 'MID' ? 135 : 225;
+                
+                roleStats[role] = {
+                    spent,
+                    target,
+                    efficiency: spent > 0 ? Math.round((spent / target) * 100) : 0,
+                    count: players.length,
+                    avgPrice: players.length > 0 ? Math.round(spent / players.length) : 0
+                };
+            });
+            
+            // Calculate insights
+            const insights = [];
+            if (roleStats.ATT.efficiency < 40) insights.push('⚠️ Investi di più in attacco');
+            if (roleStats.GK.count === 0) insights.push('🥅 Manca un portiere titolare');
+            if (appState.remainingCredits < 50 && appState.playersBought < 20) 
+                insights.push('💰 Attenzione al budget rimanente');
             
             const content = `
                 <div style="padding: 20px;">
-                    <h2 style="margin-bottom: 20px;">Analisi Spesa</h2>
+                    <h2 style="margin-bottom: 20px;">📊 Analytics Asta</h2>
+                    
+                    ${insights.length > 0 ? `
+                        <div style="background: #fff3e0; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4 style="color: #f57c00; margin-bottom: 8px;">Insights</h4>
+                            ${insights.map(i => `<div style="margin: 4px 0;">${i}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                    
                     <div class="stat-card">
-                        <div class="stat-label">Spesa Media per Ruolo</div>
-                        ${Object.entries(avgPrices).map(([role, avg]) => `
-                            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
-                                <span>${role}</span>
-                                <strong>${avg} cr</strong>
+                        <div class="stat-label">Efficienza Spesa per Ruolo</div>
+                        ${Object.entries(roleStats).map(([role, stats]) => `
+                            <div style="margin: 12px 0;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span>${role}</span>
+                                    <span style="font-weight: 600;">${stats.spent}/${stats.target} cr</span>
+                                </div>
+                                <div class="stat-progress">
+                                    <div class="stat-progress-bar" 
+                                         style="width: ${stats.efficiency}%; 
+                                                background: ${stats.efficiency > 100 ? '#f44336' : 
+                                                            stats.efficiency > 80 ? '#4CAF50' : '#ff9800'}">
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #718096; margin-top: 4px;">
+                                    ${stats.count} giocatori • Media: ${stats.avgPrice} cr
+                                </div>
                             </div>
                         `).join('')}
                     </div>
-                    <div class="stat-card" style="margin-top: 12px;">
-                        <div class="stat-label">Efficienza Budget</div>
-                        <div class="stat-value">${Math.round((appState.spentCredits / appState.totalBudget) * 100)}%</div>
-                        <div class="stat-progress">
-                            <div class="stat-progress-bar" style="width: ${(appState.spentCredits / appState.totalBudget) * 100}%"></div>
+                    
+                    <div class="stat-card" style="margin-top: 16px;">
+                        <div class="stat-label">Strategia Rilevata</div>
+                        <div style="margin-top: 8px;">
+                            ${detectStrategy(roleStats)}
                         </div>
                     </div>
                 </div>
@@ -1231,26 +1506,145 @@
             showModal('Analytics', content);
         }
 
-        // Settings
+        // Detect auction strategy
+        function detectStrategy(stats) {
+            const attackHeavy = stats.ATT.efficiency > 50;
+            const balanced = Math.abs(stats.DEF.efficiency - stats.MID.efficiency) < 20;
+            const budget = Object.values(stats).every(s => s.avgPrice < 30);
+            
+            if (attackHeavy) return '⚔️ <strong>Attack Heavy</strong>: Focus su bomber di qualità';
+            if (balanced) return '⚖️ <strong>Bilanciata</strong>: Distribuzione equilibrata';
+            if (budget) return '💰 <strong>Budget Oriented</strong>: Massimizza il valore';
+            return '🎯 <strong>In Sviluppo</strong>: Strategia ancora da definire';
+        }
+
+        // Enhanced Settings with filters
         function showSettings() {
             const content = `
                 <div style="padding: 20px;">
-                    <h2 style="margin-bottom: 20px;">Impostazioni</h2>
+                    <h2 style="margin-bottom: 20px;">⚙️ Impostazioni</h2>
+                    
                     <div class="form-group">
                         <label class="form-label">Budget Totale</label>
                         <input type="number" class="form-input" value="${appState.totalBudget}" 
-                               onchange="appState.totalBudget = parseInt(this.value); updateStats(); saveToStorage();">
+                               id="budgetInput">
                     </div>
-                    <button class="btn btn-primary" onclick="saveToStorage()">Salva Impostazioni</button>
-                    <button class="btn btn-secondary" style="margin-top: 12px;" 
-                            onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }">
-                        Reset Completo
+                    
+                    <div class="form-group">
+                        <label class="form-label">Filtro Fascia Prezzo</label>
+                        <select class="form-input" id="fasciaFilter">
+                            <option value="all">Tutte</option>
+                            <option value="Top">Solo Top</option>
+                            <option value="Med">Solo Medium</option>
+                            <option value="Low">Solo Budget</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Titolarità Minima</label>
+                        <input type="range" min="1" max="5" value="${appState.filters.minTitolarita}" 
+                               id="titolaritaFilter" style="width: 100%;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #718096;">
+                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="applySettings()">
+                        Applica Impostazioni
+                    </button>
+                    
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
+                    
+                    <h3 style="margin-bottom: 12px;">Gestione Dati</h3>
+                    <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;" 
+                            onclick="exportData()">📤 Esporta Backup</button>
+                    <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;" 
+                            onclick="document.getElementById('importFile').click()">📥 Importa Backup</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;" 
+                           onchange="importData(event)">
+                    <button class="btn btn-danger" style="width: 100%; background: #f44336;" 
+                            onclick="if(confirm('Cancellare tutti i dati?')) { localStorage.clear(); location.reload(); }">
+                        🗑️ Reset Completo
                     </button>
                 </div>
             `;
             
             showModal('Impostazioni', content);
         }
+
+        // Apply settings
+        function applySettings() {
+            const budgetInput = document.getElementById('budgetInput');
+            const fasciaFilter = document.getElementById('fasciaFilter');
+            const titolaritaFilter = document.getElementById('titolaritaFilter');
+            
+            if (budgetInput) {
+                appState.totalBudget = parseInt(budgetInput.value);
+            }
+            
+            if (fasciaFilter) {
+                appState.filters.fascia = fasciaFilter.value;
+            }
+            
+            if (titolaritaFilter) {
+                appState.filters.minTitolarita = parseInt(titolaritaFilter.value);
+            }
+            
+            updateStats();
+            saveToStorage();
+            showToast('Impostazioni applicate!', 'success');
+            
+            // Close modal
+            document.querySelector('.modal.show')?.remove();
+        }
+
+        // Add custom CSS for new elements
+        const additionalStyles = document.createElement('style');
+        additionalStyles.textContent = `
+            .btn-danger {
+                background: #f44336 !important;
+                color: white;
+            }
+            
+            select.form-input {
+                width: 100%;
+                padding: 12px;
+                border: 2px solid #e2e8f0;
+                border-radius: var(--radius);
+                font-size: 1rem;
+                background: white;
+                -webkit-appearance: none;
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 12px center;
+                background-size: 20px;
+                padding-right: 40px;
+            }
+            
+            input[type="range"] {
+                -webkit-appearance: none;
+                height: 6px;
+                background: #e2e8f0;
+                border-radius: 3px;
+                outline: none;
+            }
+            
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 20px;
+                height: 20px;
+                background: var(--primary);
+                border-radius: 50%;
+                cursor: pointer;
+            }
+            
+            hr {
+                margin: 20px 0;
+                border: none;
+                border-top: 1px solid #e2e8f0;
+            }
+        `;
+        document.head.appendChild(additionalStyles);
 
         // Generic Modal
         function showModal(title, content) {
