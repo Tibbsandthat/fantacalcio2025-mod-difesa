@@ -216,10 +216,10 @@
             opacity: 0.6;
         }
 
-        .player-actions {
+        .player-card .player-actions {
+            margin-left: auto;
             display: flex;
             gap: 4px;
-            margin-left: 8px;
         }
 
         .action-btn {
@@ -244,7 +244,7 @@
             display: inline-block;
         }
 
-        .player-info {
+        .player-card .player-info {
             flex: 1;
         }
 
@@ -754,6 +754,29 @@
             margin-bottom: 20px;
             max-height: 150px;
             overflow-y: auto;
+        }
+
+        @media (max-width: 600px) {
+            :root {
+                --font-sm: 10px;
+                --font-base: 12px;
+                --font-lg: 16px;
+                --radius: 12px;
+            }
+
+            .players-grid {
+                gap: 4px;
+            }
+
+            .player-card {
+                padding: 4px 6px;
+            }
+
+            .action-btn {
+                padding: 4px;
+                min-width: 32px;
+                min-height: 32px;
+            }
         }
     </style>
 </head>
@@ -1729,12 +1752,11 @@
                                 ${Math.round(player.prezzi.min)}-${Math.round(player.prezzi.max)}
                             </div>
                         </div>
-                    </div>
-                    <div class="player-actions">
-                        <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${Math.round(player.prezzi.avg)})">🎯</button>
-                        <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${Math.round(player.prezzi.avg)}, '${role}')">💸</button>
-                        ${purchasedInfo ? `<button class="action-btn" onclick="event.stopPropagation(); unbuyPlayer('${player.nome}', '${role}')">🔄</button><span class=\"purchase-badge\">${Math.round(purchasedInfo.price)}</span>` : ''}
-                    </div>
+                        <div class="player-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${Math.round(player.prezzi.avg)})">🎯</button>
+                            <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${Math.round(player.prezzi.avg)}, '${role}')">💸</button>
+                            ${purchasedInfo ? `<button class="action-btn" onclick="event.stopPropagation(); unbuyPlayer('${player.nome}', '${role}')">🔄</button><span class=\"purchase-badge\">${Math.round(purchasedInfo.price)}</span>` : ''}
+                        </div>
                 </div>
             `;
         }
