@@ -78,6 +78,11 @@
             padding: clamp(10px, 4vw, 30px);
         }
 
+        #budget-view {
+            display: none;
+            padding: clamp(10px, 4vw, 30px);
+        }
+
         .search-container {
             padding: clamp(10px, 4vw, 30px);
             background: var(--card-bg);
@@ -844,18 +849,38 @@
         <div class="planner-container" id="squad-planner"></div>
         <div class="players-grid" id="targets-grid"></div>
         </div>
-        <div id="budget-view" style="display:none;">
-            <div class="sidebar-section">
+        <div id="budget-view">
+            <div class="sidebar-section role-section">
                 <div class="sidebar-title">💰 Budget</div>
-                <button id="open-strategy" class="action-btn" style="width: 100%; margin-top: 10px;">📐 Strategia</button>
-                <div id="strategy-container" style="display: none; margin-top: 10px;">
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
-                        <label>P: <input type="number" id="strategy-P" min="0" max="100" style="width:60px;"></label>
-                        <label>D: <input type="number" id="strategy-D" min="0" max="100" style="width:60px;"></label>
-                        <label>C: <input type="number" id="strategy-C" min="0" max="100" style="width:60px;"></label>
-                        <label>A: <input type="number" id="strategy-A" min="0" max="100" style="width:60px;"></label>
+                <div id="budget-summary" class="role-header">
+                    <div>Restante: <span id="budget-remaining">500</span></div>
+                    <div class="slot-summary">
+                        P <span id="pct-P">0%</span> •
+                        D <span id="pct-D">0%</span> •
+                        C <span id="pct-C">0%</span> •
+                        A <span id="pct-A">0%</span>
                     </div>
-                    <button id="save-strategy" class="action-btn" style="width:100%;">Salva</button>
+                </div>
+                <div id="strategy-container" style="margin-top: 10px;">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label class="filter-label" for="strategy-P">P</label>
+                            <input type="number" id="strategy-P" min="0" max="100" class="filter-select">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label" for="strategy-D">D</label>
+                            <input type="number" id="strategy-D" min="0" max="100" class="filter-select">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label" for="strategy-C">C</label>
+                            <input type="number" id="strategy-C" min="0" max="100" class="filter-select">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label" for="strategy-A">A</label>
+                            <input type="number" id="strategy-A" min="0" max="100" class="filter-select">
+                        </div>
+                    </div>
+                    <button id="save-strategy" class="nav-btn" style="width:100%;">Salva</button>
                 </div>
                 <ul class="recommendations">
                     <li>Totale: <span id="budget-total">0</span>/<span id="budget-total-max">500</span></li>
@@ -1143,15 +1168,7 @@
             }
         }
 
-        // Strategy inputs toggle
-        const strategyContainer = budgetView.querySelector('#strategy-container');
-        budgetView.querySelector('#open-strategy').addEventListener('click', () => {
-            if (strategyContainer.style.display === 'none' || strategyContainer.style.display === '') {
-                strategyContainer.style.display = 'block';
-            } else {
-                strategyContainer.style.display = 'none';
-            }
-        });
+        // Strategy inputs
         budgetView.querySelector('#save-strategy').addEventListener('click', saveStrategy);
 
         // Navigation
@@ -1388,17 +1405,20 @@
             budget.total.max = newTotal;
             updateBudgetUI();
             updateSmartPricing();
-            strategyContainer.style.display = 'none';
         }
 
         function updateBudgetUI() {
             budgetView.querySelector('#budget-total').textContent = budget.total.spent;
             budgetView.querySelector('#budget-total-max').textContent = budget.total.max;
+            const remaining = budget.total.max - budget.total.spent;
+            budgetView.querySelector('#budget-remaining').textContent = remaining;
             ['P','D','C','A'].forEach(role => {
                 budgetView.querySelector(`#budget-${role}`).textContent = budget.roles[role].spent;
                 budgetView.querySelector(`#budget-${role}-max`).textContent = budget.roles[role].max;
                 budgetView.querySelector(`#count-${role}`).textContent = budget.roles[role].count;
                 budgetView.querySelector(`#needed-${role}`).textContent = budget.roles[role].needed;
+                const pct = budget.roles[role].max ? Math.round((budget.roles[role].spent / budget.roles[role].max) * 100) : 0;
+                budgetView.querySelector(`#pct-${role}`).textContent = `${pct}%`;
                 getRoleSlots(role).forEach(slot => {
                     const span = document.getElementById(`slot-count-${role}-${slot}`);
                     if (span) {
