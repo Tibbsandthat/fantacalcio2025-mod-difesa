@@ -649,6 +649,7 @@
                         <li>C: <span id="budget-C">0</span>/<span id="budget-C-max">150</span> (<span id="count-C">0</span>/<span id="needed-C">8</span>)</li>
                         <li>A: <span id="budget-A">0</span>/<span id="budget-A-max">140</span> (<span id="count-A">0</span>/<span id="needed-A">6</span>)</li>
                     </ul>
+                    <button id="open-strategy" class="action-btn" style="width: 100%; margin-top: 10px;">📐 Strategia</button>
                 </div>
 
                 <div class="sidebar-section">
@@ -691,6 +692,21 @@
         </div>
     </div>
 
+    <!-- Strategy Modal -->
+    <div id="strategy-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Strategia Budget (%)</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                <label>P: <input type="number" id="strategy-P" min="0" max="100" style="width:60px;"></label>
+                <label>D: <input type="number" id="strategy-D" min="0" max="100" style="width:60px;"></label>
+                <label>C: <input type="number" id="strategy-C" min="0" max="100" style="width:60px;"></label>
+                <label>A: <input type="number" id="strategy-A" min="0" max="100" style="width:60px;"></label>
+            </div>
+            <button id="save-strategy" class="action-btn" style="width:100%;">Salva</button>
+        </div>
+    </div>
+
     <!-- Player Detail Modal -->
     <div id="player-modal" class="modal">
         <div class="modal-content">
@@ -723,6 +739,7 @@
                 'A': { max: 140, spent: 0, count: 0, needed: 6 }
             }
         };
+        const strategy = {};
         const targets = {};
         const purchased = {};
 
@@ -756,6 +773,9 @@
             // Initialize range sliders
             document.getElementById('min-price').addEventListener('input', updatePriceRange);
             document.getElementById('max-price').addEventListener('input', updatePriceRange);
+            ['P','D','C','A'].forEach(role => {
+                strategy[role] = Math.round((budget.roles[role].max / budget.total.max) * 100);
+            });
             updateBudgetUI();
             updateTargetsUI();
         }
@@ -778,9 +798,19 @@
             const modal = document.getElementById('player-modal');
             const closeModal = modal.querySelector('.close');
             closeModal.addEventListener('click', () => modal.style.display = 'none');
-            
+
             window.addEventListener('click', (e) => {
                 if (e.target === modal) modal.style.display = 'none';
+            });
+
+            // Strategy modal
+            const strategyModal = document.getElementById('strategy-modal');
+            const strategyClose = strategyModal.querySelector('.close');
+            document.getElementById('open-strategy').addEventListener('click', openStrategyModal);
+            strategyClose.addEventListener('click', () => strategyModal.style.display = 'none');
+            document.getElementById('save-strategy').addEventListener('click', saveStrategy);
+            window.addEventListener('click', (e) => {
+                if (e.target === strategyModal) strategyModal.style.display = 'none';
             });
         }
 
@@ -917,6 +947,60 @@
             return 'average';
         }
 
+        function findPlayer(name, role) {
+            const players = PLAYERS_DB[role] || [];
+            const playerArray = players.find(p => p[0] === name);
+            return playerArray ? decodePlayer(playerArray, role) : null;
+        }
+
+        function calculateTargetPrices(player, role) {
+            const roleData = budget.roles[role];
+            const remainingBudget = roleData.max - roleData.spent;
+            const remainingSlots = roleData.needed - roleData.count;
+            const perSlot = remainingSlots > 0 ? Math.floor(remainingBudget / remainingSlots) : 0;
+            return {
+                ideal: Math.min(player.prezzi.min, perSlot),
+                suggested: Math.min(player.prezzi.avg, perSlot),
+                max: Math.min(player.prezzi.max, remainingBudget)
+            };
+        }
+
+        function updateSmartPricing() {
+            const remainingTotal = budget.total.max - budget.total.spent;
+            ['P','D','C','A'].forEach(role => {
+                budget.roles[role].max = budget.roles[role].spent + Math.round(remainingTotal * (strategy[role] || 0) / 100);
+            });
+            Object.keys(targets).forEach(key => {
+                const t = targets[key];
+                const player = findPlayer(t.name, t.role);
+                if (player) {
+                    t.prices = calculateTargetPrices(player, t.role);
+                }
+            });
+            updateBudgetUI();
+            updateTargetsUI();
+        }
+
+        function openStrategyModal() {
+            const strategyModal = document.getElementById('strategy-modal');
+            ['P','D','C','A'].forEach(role => {
+                document.getElementById(`strategy-${role}`).value = strategy[role] || 0;
+            });
+            strategyModal.style.display = 'block';
+        }
+
+        function saveStrategy() {
+            const total = budget.total.max;
+            ['P','D','C','A'].forEach(role => {
+                const val = parseInt(document.getElementById(`strategy-${role}`).value) || 0;
+                strategy[role] = val;
+                budget.roles[role].max = Math.round(total * val / 100);
+            });
+            updateBudgetUI();
+            document.getElementById('strategy-modal').style.display = 'none';
+            updateSmartPricing();
+        }
+
         function updateBudgetUI() {
             document.getElementById('budget-total').textContent = budget.total.spent;
             document.getElementById('budget-total-max').textContent = budget.total.max;
@@ -931,15 +1015,19 @@
         function updateTargetsUI() {
             const list = document.getElementById('target-list');
             if (!list) return;
-            list.innerHTML = Object.values(targets).map(t => `<li class="recommendation">${t.name} (${t.role}) - €${t.price}</li>`).join('');
+            list.innerHTML = Object.values(targets)
+                .map(t => `<li class="recommendation">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max}</li>`)
+                .join('');
         }
 
-        function toggleTarget(name, role, price) {
+        function toggleTarget(name, role) {
             const key = `${role}:${name}`;
             if (targets[key]) {
                 delete targets[key];
             } else {
-                targets[key] = { name, role, price };
+                const player = findPlayer(name, role);
+                if (!player) return;
+                targets[key] = { name, role, prices: calculateTargetPrices(player, role) };
             }
             updateTargetsUI();
         }
@@ -947,6 +1035,8 @@
         function buyPlayer(name, price, role) {
             const key = `${role}:${name}`;
             if (purchased[key]) return;
+            const player = findPlayer(name, role);
+            const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
             purchased[key] = true;
             budget.total.spent += price;
             budget.roles[role].spent += price;
@@ -957,6 +1047,9 @@
             delete targets[key];
             updateTargetsUI();
             checkAlerts(role);
+            if (price < hints.ideal || price < hints.suggested) {
+                updateSmartPricing();
+            }
         }
 
         function checkAlerts(role) {
@@ -1023,7 +1116,7 @@
                         </div>
                     </div>
                     <div class="player-actions">
-                        <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${player.prezzi.avg})">🎯</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}')">🎯</button>
                         <button class="action-btn" onclick="event.stopPropagation(); buyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
                     </div>
                 </div>
@@ -1160,6 +1253,7 @@
             if (!playerArray) return;
             
             const player = decodePlayer(playerArray, role);
+            const priceHints = calculateTargetPrices(player, role);
             const modal = document.getElementById('player-modal');
             const detailsContainer = document.getElementById('player-details');
 
@@ -1244,7 +1338,9 @@
                     <div class="detail-section">
                         <div class="detail-title">🎯 Raccomandazione AI</div>
                         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
-                            <strong>Prezzo Target:</strong> €${Math.round(player.prezzi.avg * 0.95)}<br>
+                            <strong>Ideale:</strong> €${priceHints.ideal}<br>
+                            <strong>Suggerito:</strong> €${priceHints.suggested}<br>
+                            <strong>Massimo:</strong> €${priceHints.max}<br>
                             <strong>Opportunità:</strong> ${getOpportunityLevel(player).toUpperCase()}<br>
                             <strong>Strategia:</strong> ${getOpportunityLevel(player) === 'high' ? 'Punta al prezzo minimo, alta volatilità' : 'Prezzo stabile, offri vicino al consenso'}
                         </div>
