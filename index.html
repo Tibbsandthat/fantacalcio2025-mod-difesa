@@ -11,44 +11,40 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --color-primary: #2563eb;
+            --color-secondary: #9333ea;
+            --color-success: #22c55e;
+            --color-warning: #facc15;
+            --text-color: #f1f5f9;
+            --text-muted: #94a3b8;
+            --card-bg: #2a2a36;
+            --font-sm: 12px;
+            --font-base: 14px;
+            --font-lg: 18px;
+            --radius: 16px;
+        }
+
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #9333ea 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
             height: 100vh;
             min-height: 100dvh;
-            color: #333;
+            color: var(--text-color);
             padding: 20px;
+            font-size: var(--font-base);
+            line-height: 1.3;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
+            border-radius: var(--radius);
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
-            color: white;
-            padding: clamp(10px, 4vw, 30px);
-            text-align: center;
-            position: relative;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            margin-bottom: 20px;
         }
 
         .nav-tabs {
@@ -59,18 +55,20 @@
         }
 
         .nav-btn {
-            padding: 6px 18px;
-            border-radius: 25px;
-            border: none;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--color-primary);
+            background: transparent;
+            color: var(--color-primary);
             cursor: pointer;
+            min-width: 44px;
+            min-height: 44px;
         }
 
         .nav-btn.active {
-            background: #3b82f6;
-            color: white;
-            font-weight: bold;
+            background: var(--color-primary);
+            color: #fff;
+            font-weight: 600;
         }
 
         #targets-view {
@@ -78,37 +76,10 @@
             padding: clamp(10px, 4vw, 30px);
         }
 
-        .stats-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .stat-card {
-            background: rgba(255,255,255,0.2);
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
         .search-container {
             padding: clamp(10px, 4vw, 30px);
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
+            background: var(--card-bg);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .search-box {
@@ -119,17 +90,19 @@
 
         .search-input {
             width: 100%;
-            padding: 15px 20px;
-            font-size: 1.1rem;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: var(--font-base);
+            border: 2px solid var(--color-primary);
+            border-radius: var(--radius);
             outline: none;
+            background: transparent;
+            color: var(--text-color);
             transition: all 0.3s ease;
         }
 
         .search-input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3);
         }
 
         .filters {
@@ -142,18 +115,20 @@
 
         .filter-btn {
             padding: 8px 16px;
-            border: 2px solid #2563eb;
-            background: white;
-            color: #2563eb;
-            border-radius: 12px;
+            border: 1px solid var(--color-primary);
+            background: transparent;
+            color: var(--color-primary);
+            border-radius: var(--radius);
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.9rem;
+            font-size: var(--font-base);
+            min-width: 44px;
+            min-height: 44px;
         }
 
         .filter-btn.active {
-            background: #2563eb;
-            color: white;
+            background: var(--color-primary);
+            color: #fff;
         }
 
         .main-content {
@@ -166,6 +141,7 @@
         .players-grid {
             display: grid;
             gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
         }
 
         @media (max-width: 768px) {
@@ -176,10 +152,11 @@
         }
 
         .role-section {
-            background: white;
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
             padding: clamp(10px, 4vw, 30px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            color: var(--text-color);
         }
 
         .role-header {
@@ -187,7 +164,7 @@
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #f1f3f4;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
         }
 
         .role-icon {
@@ -197,34 +174,35 @@
 
         .role-title {
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .role-count {
             margin-left: auto;
-            background: #2563eb;
-            color: white;
+            background: var(--color-primary);
+            color: #fff;
             padding: 5px 12px;
-            border-radius: 12px;
-            font-size: 0.9rem;
+            border-radius: var(--radius);
+            font-size: var(--font-base);
         }
 
         .player-card {
             display: flex;
             align-items: center;
-            padding: 8px 12px;
-            background: #2a2a36;
-            border-radius: 20px;
-            margin-bottom: 6px;
+            padding: 6px 10px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            margin-bottom: 4px;
             transition: all 0.3s ease;
             cursor: pointer;
             border-left: 4px solid transparent;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
         }
 
         .player-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-left-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            border-left-color: var(--color-primary);
         }
 
         .player-card.bought {
@@ -234,7 +212,6 @@
 
         .player-card.bought-elsewhere {
             opacity: 0.6;
-            background: #e9ecef;
         }
 
         .player-actions {
@@ -245,20 +222,22 @@
 
         .action-btn {
             border: none;
-            background: #2563eb;
-            color: white;
-            padding: 4px;
-            border-radius: 16px;
-            font-size: 0.75rem;
+            background: var(--color-primary);
+            color: #fff;
+            padding: 8px;
+            border-radius: var(--radius);
+            font-size: var(--font-base);
             cursor: pointer;
+            min-width: 44px;
+            min-height: 44px;
         }
 
         .purchase-badge {
-            background: #28a745;
-            color: white;
+            background: var(--color-success);
+            color: #fff;
             padding: 2px 6px;
-            border-radius: 12px;
-            font-size: 0.8rem;
+            border-radius: var(--radius);
+            font-size: var(--font-sm);
             margin-left: 4px;
             display: inline-block;
         }
@@ -268,50 +247,52 @@
         }
 
         .player-name {
-            font-weight: bold;
-            font-size: 0.9rem;
-            margin-bottom: 3px;
+            font-size: var(--font-lg);
+            margin-bottom: 2px;
+            color: var(--text-color);
+            font-weight: 600;
         }
 
         .player-team {
-            color: #666;
-            font-size: 0.75rem;
-            margin-bottom: 4px;
+            color: var(--text-muted);
+            font-size: var(--font-sm);
+            margin-bottom: 2px;
         }
 
         .player-stats {
             display: flex;
-            gap: 8px;
+            gap: 4px;
             flex-wrap: wrap;
+            line-height: 1.2;
         }
 
         .stat-badge {
-            background: #e9ecef;
-            padding: 3px 6px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            color: #495057;
+            background: var(--color-secondary);
+            padding: 2px 4px;
+            border-radius: var(--radius);
+            font-size: var(--font-sm);
+            color: var(--text-color);
         }
 
-        .stat-badge.excellent { background: #d4edda; color: #155724; }
-        .stat-badge.good { background: #fff3cd; color: #856404; }
-        .stat-badge.average { background: #f8d7da; color: #721c24; }
+        .stat-badge.excellent { background: var(--color-success); }
+        .stat-badge.good { background: var(--color-warning); color: #000; }
+        .stat-badge.average { background: var(--color-secondary); }
 
         .player-price {
             text-align: center;
-            margin-left: 10px;
+            margin-left: 8px;
         }
 
         .smart-price {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 3px;
+            font-size: var(--font-lg);
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 2px;
         }
 
         .price-range {
-            font-size: 0.75rem;
-            color: #666;
+            font-size: var(--font-sm);
+            color: var(--text-muted);
         }
 
         .price-badge {
@@ -320,36 +301,31 @@
             flex-direction: column;
             align-items: flex-end;
             padding: 4px 8px;
-            border-radius: 8px;
+            border-radius: var(--radius);
             color: #fff;
-        }
-
-        .team-logo {
-            height: 40px;
-            width: 40px;
-            border-radius: 50%;
         }
 
         .opportunity-badge {
             position: absolute;
             top: -5px;
             right: -5px;
-            background: #28a745;
-            color: white;
+            background: var(--color-success);
+            color: #fff;
             padding: 2px 6px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: bold;
+            border-radius: var(--radius);
+            font-size: var(--font-sm);
+            font-weight: 600;
         }
 
         .sidebar {
-            background: white;
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
             padding: clamp(10px, 4vw, 30px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
             height: fit-content;
             position: sticky;
             top: 20px;
+            color: var(--text-color);
         }
 
         .sidebar-section {
@@ -357,28 +333,29 @@
         }
 
         .sidebar-card {
-            background: #fff;
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 10px;
             margin-bottom: 20px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            color: var(--text-color);
         }
 
         .sidebar-card-title {
             font-size: 1.1rem;
-            font-weight: bold;
+            font-weight: 600;
             margin-bottom: 10px;
             cursor: pointer;
         }
 
         .sidebar-title {
             font-size: 1.2rem;
-            font-weight: bold;
+            font-weight: 600;
             margin-bottom: 15px;
-            color: #333;
+            color: var(--text-color);
         }
 
         .quick-stats {
@@ -391,19 +368,19 @@
         .quick-stat {
             text-align: center;
             padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
         }
 
         .quick-stat-value {
             font-size: 1.5rem;
-            font-weight: bold;
-            color: #2563eb;
+            font-weight: 600;
+            color: var(--color-primary);
         }
 
         .quick-stat-label {
-            font-size: 0.9rem;
-            color: #666;
+            font-size: var(--font-base);
+            color: var(--text-muted);
             margin-top: 5px;
         }
 
@@ -413,20 +390,20 @@
 
         .recommendation {
             padding: 12px;
-            background: #f8f9fa;
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
             margin-bottom: 10px;
-            border-left: 3px solid #28a745;
+            border-left: 3px solid var(--color-success);
         }
 
         .recommendation-text {
-            font-size: 0.9rem;
-            color: #333;
+            font-size: var(--font-base);
+            color: var(--text-color);
         }
 
         .recommendation-price {
-            font-weight: bold;
-            color: #28a745;
+            font-weight: 600;
+            color: var(--color-success);
             margin-top: 3px;
         }
 
@@ -457,12 +434,12 @@
         .loading {
             text-align: center;
             padding: 40px;
-            color: #666;
+            color: var(--text-muted);
         }
 
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #2563eb;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top: 4px solid var(--color-primary);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -494,14 +471,6 @@
                 order: -1;
                 position: static;
             }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .stats-overview {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
 
         @media (max-width: 480px) {
@@ -513,12 +482,6 @@
                 padding: 4px 12px;
                 font-size: 0.85rem;
             }
-            .header h1 {
-                font-size: 1.8rem;
-            }
-            .header .subtitle {
-                font-size: 1rem;
-            }
             .filters {
                 gap: 6px;
             }
@@ -528,10 +491,11 @@
         }
 
         .advanced-filters {
-            background: white;
+            background: var(--card-bg);
             padding: clamp(10px, 4vw, 30px);
-            border-radius: 12px;
+            border-radius: var(--radius);
             margin-bottom: 20px;
+            color: var(--text-color);
         }
 
         .filter-row {
@@ -550,15 +514,17 @@
             display: block;
             margin-bottom: 5px;
             font-weight: 500;
-            color: #555;
+            color: var(--text-muted);
         }
 
         .filter-select {
             width: 100%;
             padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            background: white;
+            border: 1px solid var(--color-primary);
+            border-radius: var(--radius);
+            background: transparent;
+            color: var(--text-color);
+            min-height: 44px;
         }
 
         .price-range-slider {
@@ -568,26 +534,35 @@
         .range-input {
             width: 100%;
             margin-bottom: 5px;
+            height: 44px;
+        }
+
+        .slot-select {
+            border: 1px solid var(--color-primary);
+            border-radius: var(--radius);
+            background: transparent;
+            color: var(--text-color);
+            min-height: 44px;
         }
 
         .range-values {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
-            color: #666;
+            font-size: var(--font-base);
+            color: var(--text-muted);
         }
 
         .ai-insights {
-            background: linear-gradient(135deg, #2563eb 0%, #9333ea 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            color: #fff;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: var(--radius);
             margin-bottom: 20px;
         }
 
         .insight-title {
             font-size: 1.1rem;
-            font-weight: bold;
+            font-weight: 600;
             margin-bottom: 10px;
         }
 
@@ -611,29 +586,30 @@
         }
 
         .modal-content {
-            background-color: white;
+            background-color: var(--card-bg);
             margin: 0;
             padding: 30px;
-            border-radius: 12px;
+            border-radius: var(--radius);
             width: 90%;
             max-width: 600px;
             height: auto;
             max-height: calc(100dvh - 2rem);
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            color: var(--text-color);
         }
 
         .close {
-            color: #aaa;
+            color: var(--text-muted);
             float: right;
             font-size: 28px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
             line-height: 1;
         }
 
         .close:hover {
-            color: #333;
+            color: var(--text-color);
         }
 
         .player-details {
@@ -642,15 +618,15 @@
         }
 
         .detail-section {
-            background: #f8f9fa;
+            background: var(--card-bg);
             padding: 15px;
-            border-radius: 12px;
+            border-radius: var(--radius);
         }
 
         .detail-title {
-            font-weight: bold;
+            font-weight: 600;
             margin-bottom: 10px;
-            color: #333;
+            color: var(--text-color);
         }
 
         .price-analysis {
@@ -663,52 +639,25 @@
         .source-price {
             text-align: center;
             padding: 10px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #ddd;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--color-primary);
         }
 
         .source-name {
             font-size: 0.8rem;
-            color: #666;
+            color: var(--text-muted);
             margin-bottom: 5px;
         }
 
         .source-value {
-            font-weight: bold;
-            color: #2563eb;
+            font-weight: 600;
+            color: var(--color-primary);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Fantacalcio 2025</h1>
-            <div class="subtitle">Ultra-Intelligent Database & Smart Pricing</div>
-            <div class="nav-tabs">
-                <button id="nav-home" class="nav-btn active">Lista</button>
-                <button id="nav-targets" class="nav-btn">Targets</button>
-            </div>
-            <div class="stats-overview">
-                <div class="stat-card">
-                    <div class="stat-value" id="total-players">465</div>
-                    <div class="stat-label">Giocatori Totali</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">4</div>
-                    <div class="stat-label">Fonti Dati</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">2</div>
-                    <div class="stat-label">Stagioni</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="avg-consensus">86%</div>
-                    <div class="stat-label">Consenso Medio</div>
-                </div>
-            </div>
-        </div>
-
         <div id="main-view">
         <div class="search-container">
             <div class="search-box">
@@ -722,6 +671,10 @@
                 <button class="filter-btn" data-role="C">⚡ Centrocampisti</button>
                 <button class="filter-btn" data-role="A">⚔️ Attaccanti</button>
             </div>
+        </div>
+        <div class="nav-tabs">
+            <button id="nav-home" class="nav-btn active">Lista</button>
+            <button id="nav-targets" class="nav-btn">Targets</button>
         </div>
 
         <div class="main-content">
@@ -1517,9 +1470,9 @@
             const purchasedInfo = purchased[key];
             const othersInfo = others[key];
             const opportunityColors = {
-                'high': '#28a745',
-                'medium': '#ffc107',
-                'low': '#6c757d'
+                'high': 'var(--color-success)',
+                'medium': 'var(--color-warning)',
+                'low': 'var(--color-secondary)'
             };
 
             const roleIcons = {
@@ -1535,7 +1488,6 @@
                 <div class="player-card ${boughtClass} ${externalClass}" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
                     <div style="position: relative; flex:1; display: flex; align-items: center; gap: 10px;">
                         ${opportunity === 'high' ? '<div class="opportunity-badge">🔥</div>' : ''}
-                        <img class="team-logo" src="img/team-icons/${player.team}.png" alt="${player.team} logo">
                         <div class="player-info">
                             <div class="player-name">${roleIcons[role]} ${player.nome}</div>
                             <div class="player-team">${player.team} • ${player.fascia}</div>
@@ -1614,7 +1566,7 @@
             if (totalFiltered === 0) {
                 allPlayersHtml = `
                     <div class="role-section">
-                        <div style="text-align: center; padding: 40px; color: #666;">
+                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
                             <div style="font-size: 3rem; margin-bottom: 20px;">🔍</div>
                             <div style="font-size: 1.2rem; margin-bottom: 10px;">Nessun risultato trovato</div>
                             <div>Prova a modificare i filtri di ricerca</div>
@@ -1660,7 +1612,7 @@
             const topOpportunitiesList = document.getElementById('top-opportunities');
             const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
 
-            topOpportunitiesList.innerHTML = opportunities
+                topOpportunitiesList.innerHTML = opportunities
                 .filter(opp => opp.reliability >= MIN_RELIABILITY)
                 .slice(0, 5)
                 .map(opp => `
@@ -1715,23 +1667,23 @@
             
             let detailsHtml = `
                 <h2>${roleIcons[role]} ${player.nome}</h2>
-                <p style="color: #666; margin-bottom: 20px;">${player.team} • ${player.fascia}</p>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">${player.team} • ${player.fascia}</p>
                 
                 <div class="player-details">
                     <div class="detail-section">
                         <div class="detail-title">💰 Analisi Prezzi Smart</div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
                             <div style="text-align: center;">
-                                <div style="font-size: 1.5rem; font-weight: bold; color: #dc3545;">€${player.prezzi.min}</div>
-                                <div style="font-size: 0.9rem; color: #666;">Minimo</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-warning);">€${player.prezzi.min}</div>
+                                <div style="font-size: var(--font-base); color: var(--text-muted);">Minimo</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-size: 1.8rem; font-weight: bold; color: #2563eb;">€${player.prezzi.avg}</div>
-                                <div style="font-size: 0.9rem; color: #666;">Consenso</div>
+                                <div style="font-size: 1.8rem; font-weight: 600; color: var(--color-primary);">€${player.prezzi.avg}</div>
+                                <div style="font-size: var(--font-base); color: var(--text-muted);">Consenso</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">€${player.prezzi.max}</div>
-                                <div style="font-size: 0.9rem; color: #666;">Massimo</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-success);">€${player.prezzi.max}</div>
+                                <div style="font-size: var(--font-base); color: var(--text-muted);">Massimo</div>
                             </div>
                         </div>
                         <div class="price-analysis">
@@ -1791,7 +1743,7 @@
             detailsHtml += `
                     <div class="detail-section">
                         <div class="detail-title">🎯 Raccomandazione AI</div>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border-left: 4px solid #2563eb;">
+                        <div style="background: var(--card-bg); padding: 15px; border-radius: var(--radius); border-left: 4px solid var(--color-primary);">
                             <strong>Ideale:</strong> €${priceHints.ideal}<br>
                             <strong>Suggerito:</strong> €${priceHints.suggested}<br>
                             <strong>Massimo:</strong> €${priceHints.max}<br>
