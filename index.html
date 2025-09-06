@@ -904,6 +904,7 @@
                     initializeApp();
                     setupEventListeners();
                     renderPlayers();
+                    generateAIInsights();
                 })
                 .catch(error => {
                     console.error('Error loading player database:', error);
@@ -1646,18 +1647,27 @@
         }
 
         function generateAIInsights() {
-            const insights = [
-                "I difensori dell'Inter mostrano il miglior rapporto qualità-prezzo questa stagione",
-                "Mercato degli attaccanti in rialzo del 12% rispetto alla stagione scorsa",
-                "Portieri con alta affidabilità disponibili sotto i 30 crediti",
-                "Centrocampisti con bonus assist sottovalutati nelle fasce medie",
-                "Trend positivo per i giocatori della Juventus dopo gli ultimi acquisti"
-            ];
+            if (!PLAYERS_DB || Object.keys(PLAYERS_DB).length === 0) {
+                document.getElementById('ai-insight').textContent = 'Analisi in corso...';
+                setTimeout(generateAIInsights, 10000);
+                return;
+            }
 
-            const randomInsight = insights[Math.floor(Math.random() * insights.length)];
-            document.getElementById('ai-insight').textContent = randomInsight;
-            
-            // Update every 10 seconds
+            const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
+            const allPlayers = Object.entries(PLAYERS_DB).flatMap(([role, arr]) =>
+                arr.map(pArr => ({ ...decodePlayer(pArr, role), role }))
+            );
+
+            const highReliability = allPlayers
+                .filter(p => (p.stats?.a || 0) >= 4)
+                .sort((a, b) => a.prezzi.avg - b.prezzi.avg);
+
+            const topPlayers = highReliability.slice(0, 3);
+            const insightText = topPlayers.length
+                ? `Giocatori affidabili a basso costo: ${topPlayers.map(p => `${roleIcons[p.role]} ${p.nome} €${p.prezzi.avg}`).join(', ')}`
+                : 'Nessun giocatore affidabile trovato.';
+
+            document.getElementById('ai-insight').textContent = insightText;
             setTimeout(generateAIInsights, 10000);
         }
 
