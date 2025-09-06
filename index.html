@@ -425,11 +425,23 @@
             text-align: center;
         }
 
-        .planner-slots {
+        .flex-wrap {
             display: flex;
             flex: 1;
             gap: 10px;
             flex-wrap: wrap;
+        }
+
+        .surface {
+            padding: 8px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .slots-planner {
+            /* uses flex-wrap and surface utilities */
         }
 
         .slot {
@@ -444,16 +456,26 @@
             color: var(--text-muted);
         }
 
-        .slot-input {
-            width: 50px;
-            padding: 6px;
+        .input-field {
+            width: 60px;
+            min-width: 44px;
+            min-height: 44px;
+            padding: 8px;
             border: 2px solid var(--color-primary);
             border-radius: var(--radius);
-            background: transparent;
+            background: var(--card-bg);
             color: var(--text-color);
+            transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
         }
 
-        .slot-input,
+        .input-field:hover,
+        .input-field:focus {
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3);
+            outline: none;
+        }
+
+        .input-field,
         #strategy-P,
         #strategy-D,
         #strategy-C,
@@ -473,7 +495,7 @@
                 margin-bottom: 8px;
             }
 
-            .planner-slots {
+            .slots-planner {
                 width: 100%;
             }
         }
@@ -1007,7 +1029,7 @@
                 row.appendChild(roleDiv);
 
                 const slotsDiv = document.createElement('div');
-                slotsDiv.className = 'planner-slots';
+                slotsDiv.className = 'slots-planner flex-wrap surface';
                 getRoleSlots(role).forEach(slot => {
                     const slotDiv = document.createElement('div');
                     slotDiv.className = 'slot';
@@ -1019,7 +1041,7 @@
 
                     const input = document.createElement('input');
                     input.type = 'number';
-                    input.className = 'slot-input';
+                    input.className = 'slot-input input-field';
                     input.id = `slot-plan-${role}-${slot}`;
                     input.min = '0';
                     input.value = slotPlan[role][slot];
