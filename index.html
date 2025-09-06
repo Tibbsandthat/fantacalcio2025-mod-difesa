@@ -424,30 +424,24 @@
             gap: 10px;
         }
 
-        .planner-row {
+        /* Role navigation menu */
+        #planner-role-menu {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
         }
 
-        .planner-row.collapsed {
-            gap: 0;
-        }
-
+        /* Obsolete collapse styles removed */
         .planner-header {
             display: flex;
             align-items: center;
-            cursor: pointer;
         }
 
         .slot-summary {
             margin-left: auto;
             font-size: var(--font-sm);
             color: var(--text-muted);
-        }
-
-        .planner-row.collapsed .slots-planner {
-            display: none;
         }
 
         .planner-role {
@@ -516,11 +510,6 @@
         }
 
         @media (max-width: 600px) {
-            .planner-row {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
             .planner-role {
                 width: auto;
                 margin-bottom: 8px;
@@ -846,8 +835,14 @@
         <div id="targets-view">
             <button id="targets-back" class="nav-btn" style="margin-bottom:10px;">⬅️ Back</button>
             <h2 style="text-align:center; margin:20px 0;">Squad Planner</h2>
-        <div class="planner-container" id="squad-planner"></div>
-        <div class="players-grid" id="targets-grid"></div>
+            <div id="planner-role-menu" class="nav-tabs">
+                <button class="nav-btn active" data-role="P">P</button>
+                <button class="nav-btn" data-role="D">D</button>
+                <button class="nav-btn" data-role="C">C</button>
+                <button class="nav-btn" data-role="A">A</button>
+            </div>
+            <div class="planner-container" id="squad-planner"></div>
+            <div class="players-grid" id="targets-grid"></div>
         </div>
         <div id="budget-view">
             <div class="sidebar-section role-section">
@@ -934,6 +929,7 @@
         const slotConfig = { 'P': 4, 'D': 4, 'C': 4, 'A': 4 };
         const slotPlan = {};
         const slotPurchases = {};
+        let activePlannerRole = 'P';
         Object.entries(slotConfig).forEach(([role, count]) => {
             slotPlan[role] = {};
             slotPurchases[role] = {};
@@ -1067,6 +1063,19 @@
             const targetsBack = document.getElementById('targets-back');
             targetsBack.addEventListener('click', () => history.back());
 
+            const roleMenu = document.getElementById('planner-role-menu');
+            roleMenu?.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    roleMenu.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activePlannerRole = btn.dataset.role;
+                    renderSquadPlanner();
+                    setupSquadPlanner();
+                    updateBudgetUI();
+                    updateTargetsUI();
+                });
+            });
+
             renderSquadPlanner();
             setupSquadPlanner();
         }
@@ -1075,57 +1084,56 @@
             const planner = document.getElementById('squad-planner');
             if (!planner) return;
             planner.innerHTML = '';
-            Object.keys(slotPlan).forEach(role => {
-                const row = document.createElement('div');
-                row.className = 'role-section planner-row';
-                row.dataset.role = role;
 
-                const header = document.createElement('div');
-                header.className = 'planner-header';
+            const role = activePlannerRole;
+            const section = document.createElement('div');
+            section.className = 'role-section';
 
-                const roleDiv = document.createElement('div');
-                roleDiv.className = 'planner-role';
-                roleDiv.textContent = role;
-                header.appendChild(roleDiv);
+            const header = document.createElement('div');
+            header.className = 'planner-header';
 
-                const summary = document.createElement('div');
-                summary.className = 'slot-summary';
-                summary.id = `slot-summary-${role}`;
-                summary.textContent = getSlotSummaryText(role);
-                header.appendChild(summary);
+            const roleDiv = document.createElement('div');
+            roleDiv.className = 'planner-role';
+            roleDiv.textContent = role;
+            header.appendChild(roleDiv);
 
-                row.appendChild(header);
+            const summary = document.createElement('div');
+            summary.className = 'slot-summary';
+            summary.id = `slot-summary-${role}`;
+            summary.textContent = getSlotSummaryText(role);
+            header.appendChild(summary);
 
-                const slotsDiv = document.createElement('div');
-                slotsDiv.className = 'slots-planner flex-wrap surface';
-                getRoleSlots(role).forEach(slot => {
-                    const slotDiv = document.createElement('div');
-                    slotDiv.className = 'slot';
+            section.appendChild(header);
 
-                    const label = document.createElement('span');
-                    label.className = 'slot-label';
-                    label.textContent = slot;
-                    slotDiv.appendChild(label);
+            const slotsDiv = document.createElement('div');
+            slotsDiv.className = 'slots-planner flex-wrap surface';
+            getRoleSlots(role).forEach(slot => {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'slot';
 
-                    const input = document.createElement('input');
-                    input.type = 'number';
-                    input.className = 'slot-input input-field';
-                    input.id = `slot-plan-${role}-${slot}`;
-                    input.min = '0';
-                    input.value = slotPlan[role][slot];
-                    slotDiv.appendChild(input);
+                const label = document.createElement('span');
+                label.className = 'slot-label';
+                label.textContent = slot;
+                slotDiv.appendChild(label);
 
-                    const small = document.createElement('small');
-                    small.id = `slot-count-${role}-${slot}`;
-                    small.textContent = `${slotPurchases[role][slot]}/${slotPlan[role][slot]}`;
-                    slotDiv.appendChild(small);
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'slot-input input-field';
+                input.id = `slot-plan-${role}-${slot}`;
+                input.min = '0';
+                input.value = slotPlan[role][slot];
+                slotDiv.appendChild(input);
 
-                    slotsDiv.appendChild(slotDiv);
-                });
+                const small = document.createElement('small');
+                small.id = `slot-count-${role}-${slot}`;
+                small.textContent = `${slotPurchases[role][slot]}/${slotPlan[role][slot]}`;
+                slotDiv.appendChild(small);
 
-                row.appendChild(slotsDiv);
-                planner.appendChild(row);
+                slotsDiv.appendChild(slotDiv);
             });
+
+            section.appendChild(slotsDiv);
+            planner.appendChild(section);
         }
 
         function getSlotSummaryText(role) {
@@ -1142,30 +1150,18 @@
         }
 
         function setupSquadPlanner() {
-            Object.keys(slotPlan).forEach(role => {
-                const row = document.querySelector(`.planner-row[data-role="${role}"]`);
-                const header = row?.querySelector('.planner-header');
-                header?.addEventListener('click', () => {
-                    const isCollapsed = row.classList.contains('collapsed');
-                    document.querySelectorAll('.planner-row').forEach(r => r.classList.add('collapsed'));
-                    if (isCollapsed) row.classList.remove('collapsed');
-                });
-
-                getRoleSlots(role).forEach(slot => {
-                    const input = document.getElementById(`slot-plan-${role}-${slot}`);
-                    if (input) {
-                        input.addEventListener('input', e => {
-                            slotPlan[role][slot] = parseInt(e.target.value) || 0;
-                            updateBudgetUI();
-                            updateTargetsUI();
-                        });
-                    }
-                });
+            const role = activePlannerRole;
+            getRoleSlots(role).forEach(slot => {
+                const input = document.getElementById(`slot-plan-${role}-${slot}`);
+                if (input) {
+                    input.addEventListener('input', e => {
+                        slotPlan[role][slot] = parseInt(e.target.value) || 0;
+                        updateBudgetUI();
+                        updateTargetsUI();
+                        updateSlotSummary(role);
+                    });
+                }
             });
-
-            if (window.matchMedia('(max-width: 600px)').matches) {
-                document.querySelectorAll('.planner-row').forEach(row => row.classList.add('collapsed'));
-            }
         }
 
         // Strategy inputs
