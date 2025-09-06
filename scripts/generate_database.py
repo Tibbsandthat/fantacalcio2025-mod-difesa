@@ -14,18 +14,45 @@ except ImportError:  # pragma: no cover - environment without pandas
     pd = None
 
 SOURCES = {
-    "fantaboom": "fantaboom_2025_26.xlsx",
-    "fantaclassic": "fantaclassic_2025_26.xlsx",
-    "profeta": "profeta_2025_26.xlsx",
-    "sos_fanta": "sos_fanta_2025_26.xlsx",
+    "2025_26": {
+        "fantaboom": "fantaboom_2025_26.xlsx",
+        "fantaclassic": "fantaclassic_2025_26.xlsx",
+        "profeta": "profeta_2025_26.xlsx",
+        "sos_fanta": "sos_fanta_2025_26.xlsx",
+    },
+    "2024_25": {
+        "fantaboom": "fantaboom_2024_25.xlsx",
+        "fantaclassic": "fantaclassic_2024_25.xlsx",
+        "profeta": "profeta_2024_25.xlsx",
+        "sos_fanta": "sos_fanta_2024_25.xlsx",
+    },
 }
 
 
 def load_source(path: Path) -> 'pd.DataFrame':
     df = pd.read_excel(path)
     df.columns = [c.lower() for c in df.columns]
-    df = df.rename(columns={"nome": "name", "ruolo": "role", "prezzo": "price"})
-    return df[["name", "role", "price"]]
+    df = df.rename(
+        columns={
+            "nome": "name",
+            "ruolo": "role",
+            "squadra": "team",
+            "prezzo": "price",
+            "gol": "goals",
+            "goal": "goals",
+            "assist": "assists",
+            "ass": "assists",
+            "minuti": "minutes",
+            "min": "minutes",
+            "media": "rating",
+            "mv": "rating",
+            "commento": "comm",
+        }
+    )
+    for col in ["team", "goals", "assists", "minutes", "rating", "comm"]:
+        if col not in df.columns:
+            df[col] = 0 if col not in ("team", "comm") else ""
+    return df[["name", "team", "role", "price", "goals", "assists", "minutes", "rating", "comm"]]
 
 
 def main() -> None:
@@ -33,32 +60,50 @@ def main() -> None:
         raise SystemExit("pandas is required to run this script")
 
     frames = []
-    for source, filename in SOURCES.items():
-        path = Path(filename)
-        if not path.exists():
-            continue
-        df = load_source(path)
-        df["source"] = source
-        frames.append(df)
+    for season, sources in SOURCES.items():
+        for source, filename in sources.items():
+            path = Path(filename)
+            if not path.exists():
+                continue
+            df = load_source(path)
+            df["source"] = source
+            df["season"] = season
+            frames.append(df)
 
     if not frames:
         raise SystemExit("no source data found")
 
     data = pd.concat(frames)
-    grouped = data.groupby(["name", "role"]).agg({"price": ["mean", "min", "max"]})
 
     result = {}
-    for (name, role), row in grouped.iterrows():
-        avg = round(row[("price", "mean")], 1)
-        min_p = int(row[("price", "min")])
-        max_p = int(row[("price", "max")])
-        result.setdefault(role, []).append(
-            {
-                "nome": name,
-                "prezzi": {"min": min_p, "max": max_p, "avg": avg},
-                "allPrices": data[(data.name == name) & (data.role == role)]["price"].tolist(),
-            }
-        )
+    for (name, role), grp in data.groupby(["name", "role"]):
+        prices = grp["price"].astype(float)
+        avg = round(prices.mean(), 1)
+        min_p = int(prices.min())
+        max_p = int(prices.max())
+        player = {
+            "nome": name,
+            "team": grp.iloc[0].get("team", ""),
+            "prezzi": {"min": min_p, "max": max_p, "avg": avg},
+            "allPrices": {},
+            "performance": {},
+            "notes": {},
+        }
+        for _, row in grp.iterrows():
+            year = str(row["season"]).split("_")[0]
+            player["allPrices"][f"{row['source']}_{year}"] = int(row["price"])
+            player["performance"].setdefault(
+                row["season"],
+                {
+                    "goals": int(row.get("goals", 0) or 0),
+                    "assists": int(row.get("assists", 0) or 0),
+                    "minutes": int(row.get("minutes", 0) or 0),
+                    "rating": float(row.get("rating", 0) or 0),
+                },
+            )
+            if row["source"] == "sos_fanta" and isinstance(row.get("comm"), str) and row.get("comm"):
+                player["notes"]["comm"] = row["comm"]
+        result.setdefault(role, []).append(player)
 
     with Path("players_database.json").open("w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
