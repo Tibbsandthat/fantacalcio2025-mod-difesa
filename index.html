@@ -749,6 +749,12 @@
             font-weight: 600;
             color: var(--color-primary);
         }
+
+        .player-description {
+            margin-bottom: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -1688,8 +1694,7 @@
             const externalClass = othersInfo ? 'bought-elsewhere' : '';
 
             return `
-                <div class="player-card ${boughtClass} ${externalClass}" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
-                    <div style="position: relative; flex:1; display: flex; align-items: center; gap: 10px;">
+                <div class="player-card ${boughtClass} ${externalClass}" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" data-name="${player.nome}" data-role="${role}">
                         ${opportunity === 'high' ? '<div class="opportunity-badge">🔥</div>' : ''}
                         <div class="player-info">
                             <div class="player-name">${roleIcons[role]} ${player.nome}</div>
@@ -1779,6 +1784,11 @@
             }
 
             playersGrid.innerHTML = allPlayersHtml;
+            playersGrid.querySelectorAll('.player-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    showPlayerDetails(card.dataset.name, card.dataset.role);
+                });
+            });
             updateTopOpportunities();
         }
 
@@ -1815,11 +1825,11 @@
             const topOpportunitiesList = document.getElementById('top-opportunities');
             const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
 
-                topOpportunitiesList.innerHTML = opportunities
+            topOpportunitiesList.innerHTML = opportunities
                 .filter(opp => opp.reliability >= MIN_RELIABILITY)
                 .slice(0, 5)
                 .map(opp => `
-                <li class="recommendation" onclick="showPlayerDetails('${opp.nome}', '${opp.role}')">
+                <li class="recommendation" data-name="${opp.nome}" data-role="${opp.role}">
                     <div class="recommendation-text">
                         ${roleIcons[opp.role]} ${opp.nome} (${opp.team})
                     </div>
@@ -1828,6 +1838,11 @@
                     </div>
                 </li>
             `).join('') || '<li class="recommendation"><div class="recommendation-text">Nessuna opportunità con i filtri attuali</div></li>';
+            topOpportunitiesList.querySelectorAll('.recommendation[data-name]').forEach(item => {
+                item.addEventListener('click', () => {
+                    showPlayerDetails(item.dataset.name, item.dataset.role);
+                });
+            });
         }
 
         function generateAIInsights() {
@@ -1855,6 +1870,7 @@
             setTimeout(generateAIInsights, 10000);
         }
 
+
         function showPlayerDetails(playerName, role, push = true) {
             const players = PLAYERS_DB[role] || [];
             const playerRecord = players.find(
@@ -1867,17 +1883,64 @@
                 ? decodePlayer(playerRecord, role)
                 : playerRecord;
             const priceHints = calculateTargetPrices(player, role);
+            const seasons = Object.keys(player.performance || {}).sort().slice(-2).reverse();
             const modal = document.getElementById('player-modal');
             const detailsContainer = document.getElementById('player-details');
 
             const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
-            
+
             let detailsHtml = `
                 <h2>${roleIcons[role]} ${player.nome}</h2>
                 <p style="color: var(--text-muted); margin-bottom: 20px;">${player.team} • ${player.fascia}</p>
-                ${player.notes?.comm ? `<div id="player-comm" style="margin-bottom:20px;"></div>` : ''}
+                ${player.notes?.comm ? `<div id="player-comm" class="player-description"></div>` : ''}
 
                 <div class="player-details">
+                    <div class="detail-section">
+                        <div class="detail-title">📊 Statistiche Essenziali</div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div>
+                                <strong>Titolarità:</strong> ${getReliabilityStars(player.stats.t)} (${player.stats.t}/5)
+                            </div>
+                            <div>
+                                <strong>Affidabilità:</strong> ${getReliabilityStars(player.stats.a)} (${player.stats.a}/5)
+                            </div>
+                            <div>
+                                <strong>Integrità:</strong> ${getReliabilityStars(player.stats.i)} (${player.stats.i}/5)
+                            </div>
+                            <div>
+                                <strong>FMV:</strong> ${player.stats.f || 'N/A'}
+                            </div>
+                        </div>
+                    </div>`;
+            if (seasons.length) {
+                detailsHtml += `
+                    <div class="detail-section">
+                        <div class="detail-title">⚽ Performance</div>
+                        <div id="season-rows">
+                            ${seasons.map(season => {
+                                const perf = player.performance[season] || {};
+                                const g = perf.goals ?? perf.g ?? 0;
+                                const a = perf.assists ?? perf.as ?? 0;
+                                const m = perf.minutes ?? perf.min ?? 0;
+                                const r = perf.rating ?? perf.mv ?? 'N/A';
+                                const label = season.replace('_','/');
+                                return `<div class="season-row" data-season="${season}" style="cursor:pointer; padding:4px 0;"><strong>${label}:</strong> G:${g} A:${a} Min:${m} MV:${r}</div>`;
+                            }).join('')}
+                        </div>
+                        <div id="selected-season" style="margin-top:10px;"></div>
+                    </div>
+                `;
+            }
+            const latestPrices = {};
+            Object.entries(player.allPrices || {}).forEach(([source, price]) => {
+                const base = source.replace(/_\d{4}/, '');
+                const yearMatch = source.match(/_(\d{4})/);
+                const year = yearMatch ? parseInt(yearMatch[1]) : 0;
+                if (!latestPrices[base] || year > latestPrices[base].year) {
+                    latestPrices[base] = { price, year };
+                }
+            });
+            detailsHtml += `
                     <div class="detail-section">
                         <div class="detail-title">💰 Analisi Prezzi Smart</div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
@@ -1895,75 +1958,19 @@
                             </div>
                         </div>
                         <div class="price-analysis">
-            `;
-
-            // Show all source prices (deduplicated by base source)
-            const latestPrices = {};
-            Object.entries(player.allPrices || {}).forEach(([source, price]) => {
-                const base = source.replace(/_\d{4}/, '');
-                const yearMatch = source.match(/_(\d{4})/);
-                const year = yearMatch ? parseInt(yearMatch[1]) : 0;
-                if (!latestPrices[base] || year > latestPrices[base].year) {
-                    latestPrices[base] = { price, year };
-                }
-            });
+                `;
             Object.entries(latestPrices).forEach(([base, info]) => {
                 const cleanSource = base.replace('_', ' ').toUpperCase();
                 detailsHtml += `
-                    <div class="source-price">
-                        <div class="source-name">${cleanSource}</div>
-                        <div class="source-value">${Math.round(info.price)} crediti</div>
-                    </div>
+                            <div class="source-price">
+                                <div class="source-name">${cleanSource}</div>
+                                <div class="source-value">${Math.round(info.price)} crediti</div>
+                            </div>
                 `;
             });
-
             detailsHtml += `
                         </div>
                     </div>
-                    
-                    <div class="detail-section">
-                        <div class="detail-title">📊 Statistiche Essenziali</div>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                            <div>
-                                <strong>Titolarità:</strong> ${getReliabilityStars(player.stats.t)} (${player.stats.t}/5)
-                            </div>
-                            <div>
-                                <strong>Affidabilità:</strong> ${getReliabilityStars(player.stats.a)} (${player.stats.a}/5)
-                            </div>
-                            <div>
-                                <strong>Integrità:</strong> ${getReliabilityStars(player.stats.i)} (${player.stats.i}/5)
-                            </div>
-                            <div>
-                                <strong>FMV:</strong> ${player.stats.f || 'N/A'}
-                            </div>
-                        </div>
-                    </div>
-            `;
-
-            const seasons = Object.keys(player.performance || {}).sort().slice(-2).reverse();
-            if (seasons.length) {
-                detailsHtml += `
-                    <div class="detail-section">
-                        <div class="detail-title">⚽ Performance</div>
-                        <div id="season-rows">
-                `;
-                seasons.forEach(season => {
-                    const perf = player.performance[season] || {};
-                    const g = perf.goals ?? perf.g ?? 0;
-                    const a = perf.assists ?? perf.as ?? 0;
-                    const m = perf.minutes ?? perf.min ?? 0;
-                    const r = perf.rating ?? perf.mv ?? 'N/A';
-                    const label = season.replace('_','/');
-                    detailsHtml += `<div class="season-row" data-season="${season}" style="cursor:pointer; padding:4px 0;"><strong>${label}:</strong> G:${g} A:${a} Min:${m} MV:${r}</div>`;
-                });
-                detailsHtml += `
-                        </div>
-                        <div id="selected-season" style="margin-top:10px;"></div>
-                    </div>
-                `;
-            }
-
-            detailsHtml += `
                     <div class="detail-section">
                         <div class="detail-title">🎯 Raccomandazione AI</div>
                         <div style="background: var(--card-bg); padding: 15px; border-radius: var(--radius); border-left: 4px solid var(--color-primary);">
@@ -1976,7 +1983,6 @@
                     </div>
                 </div>
             `;
-
             detailsContainer.innerHTML = detailsHtml;
 
             if (player.notes?.comm) {
