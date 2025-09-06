@@ -920,16 +920,23 @@
         function initializeApp() {
             // Calculate total players
             const totalPlayers = Object.values(PLAYERS_DB).reduce((sum, role) => sum + role.length, 0);
-            document.getElementById('total-players').textContent = totalPlayers;
+            const totalEl = document.getElementById('total-players');
+            if (totalEl) totalEl.textContent = totalPlayers;
 
             // Initialize range sliders
-            document.getElementById('min-price').addEventListener('input', updatePriceRange);
-            document.getElementById('max-price').addEventListener('input', updatePriceRange);
-            ['P','D','C','A'].forEach(role => {
+            const minPrice = document.getElementById('min-price');
+            const maxPrice = document.getElementById('max-price');
+            if (!minPrice || !maxPrice) return;
+            minPrice.addEventListener('input', updatePriceRange);
+            maxPrice.addEventListener('input', updatePriceRange);
+
+            for (const role of ['P','D','C','A']) {
                 strategy[role] = Math.round((budget.roles[role].max / budget.total.max) * 100);
                 const input = document.getElementById(`strategy-${role}`);
-                if (input) input.value = strategy[role];
-            });
+                if (!input) return;
+                input.value = strategy[role];
+            }
+
             updateBudgetUI();
             updateTargetsUI();
         }
