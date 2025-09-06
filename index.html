@@ -49,6 +49,33 @@
             margin-bottom: 20px;
         }
 
+        .nav-tabs {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+        }
+
+        .nav-btn.active {
+            background: white;
+            color: #2a5298;
+            font-weight: bold;
+        }
+
+        #targets-view {
+            display: none;
+            padding: 30px;
+        }
+
         .stats-overview {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -209,6 +236,16 @@
             border-radius: 8px;
             font-size: 0.8rem;
             cursor: pointer;
+        }
+
+        .purchase-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-left: 4px;
+            display: inline-block;
         }
 
         .player-info {
@@ -539,6 +576,10 @@
         <div class="header">
             <h1>Fantacalcio 2025</h1>
             <div class="subtitle">Ultra-Intelligent Database & Smart Pricing</div>
+            <div class="nav-tabs">
+                <button id="nav-home" class="nav-btn active">Lista</button>
+                <button id="nav-targets" class="nav-btn">Targets</button>
+            </div>
             <div class="stats-overview">
                 <div class="stat-card">
                     <div class="stat-value" id="total-players">465</div>
@@ -559,6 +600,7 @@
             </div>
         </div>
 
+        <div id="main-view">
         <div class="search-container">
             <div class="search-box">
                 <input type="text" class="search-input" placeholder="🔍 Cerca giocatori... (nome, team, stats)"
@@ -653,11 +695,6 @@
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-title">🎯 Obiettivi</div>
-                    <ul class="recommendations" id="target-list"></ul>
-                </div>
-
-                <div class="sidebar-section">
                     <div class="ai-insights">
                         <div class="insight-title">🤖 AI Insights</div>
                         <div class="insight-text" id="ai-insight">
@@ -665,7 +702,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="sidebar-section">
                     <div class="sidebar-title">💎 Opportunità Top</div>
                     <ul class="recommendations" id="top-opportunities">
@@ -689,6 +725,11 @@
                     </div>
                 </div>
             </div>
+        </div>
+        </div>
+
+        <div id="targets-view">
+            <div class="players-grid" id="targets-grid"></div>
         </div>
     </div>
 
@@ -740,11 +781,33 @@
             }
         };
         const strategy = {};
-        const targets = {};
+        const targets = JSON.parse(localStorage.getItem('targets') || '{}');
         const purchased = {};
+
+        function loadPurchased() {
+            const saved = JSON.parse(localStorage.getItem('purchased') || '{}');
+            Object.entries(saved).forEach(([key, data]) => {
+                purchased[key] = data;
+                const [role, name] = key.split(':');
+                budget.total.spent += data.price;
+        budget.roles[role] = budget.roles[role] || { spent: 0, count: 0 };
+
+        budget.roles[role].spent += data.price;
+        budget.roles[role].count += 1;
+
+        targets[key] = targets[key] || { name, role, price: data.price };
+            });
+        }
+
+        function savePurchased() {
+            localStorage.setItem('purchased', JSON.stringify(purchased));
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            loadPurchased();
+            updateBudgetUI();
+            updateTargetsUI();
             const playersGrid = document.getElementById('players-grid');
             fetch('players_database.json')
                 .then(response => {
@@ -812,6 +875,10 @@
             window.addEventListener('click', (e) => {
                 if (e.target === strategyModal) strategyModal.style.display = 'none';
             });
+
+            // Navigation
+            document.getElementById('nav-home').addEventListener('click', showMainView);
+            document.getElementById('nav-targets').addEventListener('click', showTargetsView);
         }
 
         function handleSearch(e) {
@@ -833,6 +900,22 @@
             currentFilters.reliability = document.getElementById('reliability-filter').value;
             currentFilters.opportunity = document.getElementById('opportunity-filter').value;
             renderPlayers();
+        }
+
+        function showMainView() {
+            document.getElementById('main-view').style.display = 'block';
+            document.getElementById('targets-view').style.display = 'none';
+            document.getElementById('nav-home').classList.add('active');
+            document.getElementById('nav-targets').classList.remove('active');
+            renderPlayers();
+        }
+
+        function showTargetsView() {
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('targets-view').style.display = 'block';
+            document.getElementById('nav-home').classList.remove('active');
+            document.getElementById('nav-targets').classList.add('active');
+            updateTargetsUI();
         }
 
         function updatePriceRange() {
@@ -1013,11 +1096,51 @@
         }
 
         function updateTargetsUI() {
+            localStorage.setItem('targets', JSON.stringify(targets));
+
+            // Render grid (if present)
+            const container = document.getElementById('targets-grid');
+            if (container) {
+                const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
+                const slotCounts = { 'P': 0, 'D': 0, 'C': 0, 'A': 0 };
+                const cards = Object.entries(targets).map(([key, t]) => {
+                    slotCounts[t.role]++;
+                    const slot = slotCounts[t.role];
+                    const purchasedInfo = purchased[key];
+                    const price = purchasedInfo?.price ?? t.price;
+                    const boughtClass = purchasedInfo ? 'bought' : '';
+                    return `
+                        <div class="player-card ${boughtClass}">
+                            <div class="player-info">
+                                <div class="player-name">${roleIcons[t.role] ?? ''} ${t.name}</div>
+                                <div class="player-team">Ruolo: ${t.role} • Slot ${slot}</div>
+                            </div>
+                            <div class="player-price">
+                                <div class="smart-price">€${price}</div>
+                            </div>
+                            <div class="player-actions">
+                                <button class="action-btn" onclick="toggleTarget('${t.name}', '${t.role}', ${t.price})">❌</button>
+                                <button class="action-btn" onclick="editTarget('${key}')">✏️</button>
+                                <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${price}, '${t.role}')">💸</button>
+                                ${purchasedInfo ? `<span class="purchase-badge">€${purchasedInfo.price}</span>` : ''}
+                            </div>
+                        </div>`;
+                }).join('');
+                container.innerHTML = cards || '<p>Nessun obiettivo selezionato</p>';
+            }
+
+            // Render simple list (if present)
             const list = document.getElementById('target-list');
-            if (!list) return;
-            list.innerHTML = Object.values(targets)
-                .map(t => `<li class="recommendation">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max}</li>`)
-                .join('');
+            if (list) {
+                list.innerHTML = Object.entries(targets).map(([key, t]) => {
+                    const price = purchased[key]?.price ?? t.price;
+                    if (t.prices) {
+                        return `<li class="recommendation">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • €${price}</li>`;
+                    } else {
+                        return `<li class="recommendation">${t.name} (${t.role}) - €${price}</li>`;
+                    }
+                }).join('');
+            }
         }
 
         function toggleTarget(name, role) {
@@ -1032,24 +1155,54 @@
             updateTargetsUI();
         }
 
+        function promptBuyPlayer(name, defaultPrice, role) {
+            const input = prompt(`Prezzo pagato per ${name}?`, defaultPrice);
+            const price = parseInt(input, 10);
+            if (input === null || input.trim() === '' || isNaN(price)) return;
+            buyPlayer(name, price, role);
+        }
+
+        function editTarget(key) {
+            const target = targets[key];
+            if (!target) return;
+            const newPrice = prompt('Nuovo prezzo per ' + target.name, target.price);
+            if (newPrice !== null && !isNaN(newPrice)) {
+                target.price = parseInt(newPrice, 10);
+                updateTargetsUI();
+            }
+        }
+
         function buyPlayer(name, price, role) {
             const key = `${role}:${name}`;
             if (purchased[key]) return;
             const player = findPlayer(name, role);
             const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
-            purchased[key] = true;
+            purchased[key] = { name, role, price };
+        }
             budget.total.spent += price;
             budget.roles[role].spent += price;
             budget.roles[role].count += 1;
             updateBudgetUI();
             const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
-            if (el) el.classList.add('bought');
-            delete targets[key];
+            if (el) {
+                el.classList.add('bought');
+                const actions = el.querySelector('.player-actions');
+                let badge = actions.querySelector('.purchase-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'purchase-badge';
+                    actions.appendChild(badge);
+                }
+                badge.textContent = `€${price}`;
+            }
+            targets[key] = targets[key] || { name, role, price };
+            targets[key].price = price;
             updateTargetsUI();
             checkAlerts(role);
             if (price < hints.ideal || price < hints.suggested) {
                 updateSmartPricing();
             }
+            savePurchased();
         }
 
         function checkAlerts(role) {
@@ -1063,10 +1216,11 @@
             const player = decodePlayer(playerArray, role);
             const opportunity = getOpportunityLevel(player);
             const reliabilityStars = getReliabilityStars(player.stats.a);
-            
+            const key = `${role}:${player.nome}`;
+            const purchasedInfo = purchased[key];
             const opportunityColors = {
                 'high': '#28a745',
-                'medium': '#ffc107', 
+                'medium': '#ffc107',
                 'low': '#6c757d'
             };
 
@@ -1077,8 +1231,12 @@
                 'A': '⚔️'
             };
 
+            const key = `${role}:${player.nome}`;
+            const purchasedInfo = purchased[key];
+            const boughtClass = purchasedInfo ? 'bought' : '';
+
             return `
-                <div class="player-card" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
+                <div class="player-card ${boughtClass}" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
                     <div style="position: relative; flex:1;">
                         ${opportunity === 'high' ? '<div class="opportunity-badge">🔥</div>' : ''}
                         <div class="player-info">
@@ -1116,8 +1274,9 @@
                         </div>
                     </div>
                     <div class="player-actions">
-                        <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}')">🎯</button>
-                        <button class="action-btn" onclick="event.stopPropagation(); buyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${player.prezzi.avg})">🎯</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
+                        ${purchasedInfo ? `<span class="purchase-badge">€${purchasedInfo.price}</span>` : ''}
                     </div>
                 </div>
             `;
