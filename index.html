@@ -222,6 +222,11 @@
             text-decoration: line-through;
         }
 
+        .player-card.bought-elsewhere {
+            opacity: 0.6;
+            background: #e9ecef;
+        }
+
         .player-actions {
             display: flex;
             gap: 6px;
@@ -836,6 +841,7 @@
         const strategy = {};
         const targets = JSON.parse(localStorage.getItem('targets') || '{}');
         const purchased = {};
+        const others = {};
         const slotTypes = ['Top', 'SemiTop', 'Jolly'];
         const slotPlan = {
             'P': { Top: 0, SemiTop: 0, Jolly: 0 },
@@ -865,11 +871,21 @@
                 targets[key].slot = targets[key].slot || slot;
                 targets[key].price = data.price;
             });
+            const othersSaved = JSON.parse(localStorage.getItem('others') || '{}');
+            Object.entries(othersSaved).forEach(([key, data]) => {
+                const [role, name] = key.split(':');
+                others[key] = { name, role };
+            });
             savePurchased();
+            saveOthers();
         }
 
         function savePurchased() {
             localStorage.setItem('purchased', JSON.stringify(purchased));
+        }
+
+        function saveOthers() {
+            localStorage.setItem('others', JSON.stringify(others));
         }
 
         // Initialize
@@ -1228,10 +1244,12 @@
                     slotCounts[t.role]++;
                     const slot = slotCounts[t.role];
                     const purchasedInfo = purchased[key];
+                    const othersInfo = others[key];
                     const price = purchasedInfo?.price ?? t.price;
                     const boughtClass = purchasedInfo ? 'bought' : '';
+                    const externalClass = othersInfo ? 'bought-elsewhere' : '';
                     return `
-                        <div class="player-card ${boughtClass}">
+                        <div class="player-card ${boughtClass} ${externalClass}">
                             <div class="player-info">
                                 <div class="player-name">${roleIcons[t.role] ?? ''} ${t.name}</div>
                                 <div class="player-team">Ruolo: ${t.role} • Slot ${slot}</div>
@@ -1243,6 +1261,7 @@
                                 <button class="action-btn" onclick="toggleTarget('${t.name}', '${t.role}', ${t.price})">❌</button>
                                 <button class="action-btn" onclick="editTarget('${key}')">✏️</button>
                                 <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${price}, '${t.role}')">💸</button>
+                                <button class="action-btn" onclick="${othersInfo ? `unmarkBoughtElsewhere('${t.name}', '${t.role}')` : `markBoughtElsewhere('${t.name}', '${t.role}')`}">🚫</button>
                                 ${purchasedInfo ? `<button class="action-btn" onclick="unbuyPlayer('${t.name}', '${t.role}')">🔄</button><span class=\"purchase-badge\">€${purchasedInfo.price}</span>` : ''}
                             </div>
                         </div>`;
@@ -1283,6 +1302,10 @@
             const key = `${role}:${name}`;
             if (targets[key]) {
                 delete targets[key];
+                if (others[key]) {
+                    delete others[key];
+                    saveOthers();
+                }
             } else {
                 const player = findPlayer(name, role);
                 let slot = prompt('Seleziona slot (Top, SemiTop, Jolly):', 'Top');
@@ -1323,6 +1346,10 @@
             const player = findPlayer(name, role);
             const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
             purchased[key] = { name, role, price, slot };
+            if (others[key]) {
+                delete others[key];
+                saveOthers();
+            }
             budget.total.spent += price;
             budget.roles[role].spent += price;
             budget.roles[role].count += 1;
@@ -1376,6 +1403,30 @@
             updateTargetsUI();
         }
 
+        function markBoughtElsewhere(name, role) {
+            const key = `${role}:${name}`;
+            if (others[key]) return;
+            others[key] = { name, role };
+            saveOthers();
+            const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
+            if (el) {
+                el.classList.add('bought-elsewhere');
+            }
+            updateTargetsUI();
+        }
+
+        function unmarkBoughtElsewhere(name, role) {
+            const key = `${role}:${name}`;
+            if (!others[key]) return;
+            delete others[key];
+            saveOthers();
+            const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
+            if (el) {
+                el.classList.remove('bought-elsewhere');
+            }
+            updateTargetsUI();
+        }
+
         function checkAlerts(role) {
             const remaining = budget.roles[role].needed - budget.roles[role].count;
             if (remaining <= 1) {
@@ -1389,6 +1440,7 @@
             const reliabilityStars = getReliabilityStars(player.stats.a);
             const key = `${role}:${player.nome}`;
             const purchasedInfo = purchased[key];
+            const othersInfo = others[key];
             const opportunityColors = {
                 'high': '#28a745',
                 'medium': '#ffc107',
@@ -1402,9 +1454,10 @@
                 'A': '⚔️'
             };
             const boughtClass = purchasedInfo ? 'bought' : '';
+            const externalClass = othersInfo ? 'bought-elsewhere' : '';
 
             return `
-                <div class="player-card ${boughtClass}" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
+                <div class="player-card ${boughtClass} ${externalClass}" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
                     <div style="position: relative; flex:1;">
                         ${opportunity === 'high' ? '<div class="opportunity-badge">🔥</div>' : ''}
                         <div class="player-info">
