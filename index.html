@@ -1169,6 +1169,27 @@
         }
 
         // Strategy inputs
+        function handleStrategyInput(event) {
+            const inputs = ['P','D','C','A'].map(role => budgetView.querySelector(`#strategy-${role}`));
+            const total = inputs.reduce((sum, input) => sum + (parseInt(input.value) || 0), 0);
+            if (total > 100) {
+                const overflow = total - 100;
+                const current = event.target;
+                const currentVal = parseInt(current.value) || 0;
+                current.value = Math.max(0, currentVal - overflow);
+            }
+        }
+
+        ['P','D','C','A'].forEach(role => {
+            const input = budgetView.querySelector(`#strategy-${role}`);
+            input.addEventListener('input', handleStrategyInput);
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    event.target.blur();
+                }
+            });
+        });
+
         budgetView.querySelector('#save-strategy').addEventListener('click', saveStrategy);
 
         // Navigation
