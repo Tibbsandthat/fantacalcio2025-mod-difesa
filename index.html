@@ -963,7 +963,6 @@
         // Navigation
         document.getElementById('nav-home').addEventListener('click', showMainView);
         document.getElementById('nav-targets').addEventListener('click', showTargetsView);
-        }
 
         function handleSearch(e) {
             searchTerm = e.target.value.toLowerCase();
@@ -1374,9 +1373,6 @@
                 'C': '⚡',
                 'A': '⚔️'
             };
-
-            const key = `${role}:${player.nome}`;
-            const purchasedInfo = purchased[key];
             const boughtClass = purchasedInfo ? 'bought' : '';
 
             return `
