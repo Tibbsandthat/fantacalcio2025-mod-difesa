@@ -853,16 +853,19 @@
         function loadPurchased() {
             const saved = JSON.parse(localStorage.getItem('purchased') || '{}');
             Object.entries(saved).forEach(([key, data]) => {
-                purchased[key] = data;
                 const [role, name] = key.split(':');
+                const slot = data.slot || targets[key]?.slot || 'Jolly';
+                purchased[key] = { ...data, slot };
                 budget.total.spent += data.price;
-        budget.roles[role] = budget.roles[role] || { spent: 0, count: 0 };
-
-        budget.roles[role].spent += data.price;
-        budget.roles[role].count += 1;
-
-        targets[key] = targets[key] || { name, role, price: data.price };
+                budget.roles[role] = budget.roles[role] || { spent: 0, count: 0 };
+                budget.roles[role].spent += data.price;
+                budget.roles[role].count += 1;
+                slotPurchases[role][slot] = (slotPurchases[role][slot] || 0) + 1;
+                targets[key] = targets[key] || { name, role, price: data.price, slot };
+                targets[key].slot = targets[key].slot || slot;
+                targets[key].price = data.price;
             });
+            savePurchased();
         }
 
         function savePurchased() {
@@ -1240,7 +1243,7 @@
                                 <button class="action-btn" onclick="toggleTarget('${t.name}', '${t.role}', ${t.price})">❌</button>
                                 <button class="action-btn" onclick="editTarget('${key}')">✏️</button>
                                 <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${price}, '${t.role}')">💸</button>
-                                ${purchasedInfo ? `<span class="purchase-badge">€${purchasedInfo.price}</span>` : ''}
+                                ${purchasedInfo ? `<button class="action-btn" onclick="unbuyPlayer('${t.name}', '${t.role}')">🔄</button><span class=\"purchase-badge\">€${purchasedInfo.price}</span>` : ''}
                             </div>
                         </div>`;
                 }).join('');
@@ -1319,7 +1322,7 @@
             }
             const player = findPlayer(name, role);
             const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
-            purchased[key] = { name, role, price };
+            purchased[key] = { name, role, price, slot };
             budget.total.spent += price;
             budget.roles[role].spent += price;
             budget.roles[role].count += 1;
@@ -1337,8 +1340,9 @@
                 }
                 badge.textContent = `€${price}`;
             }
-            targets[key] = targets[key] || { name, role, price };
+            targets[key] = targets[key] || { name, role, price, slot };
             targets[key].price = price;
+            targets[key].slot = targets[key].slot || slot;
             updateTargetsUI();
             checkAlerts(role);
             checkSlotAlert(role, slot);
@@ -1346,6 +1350,30 @@
                 updateSmartPricing();
             }
             savePurchased();
+        }
+
+        function unbuyPlayer(name, role) {
+            const key = `${role}:${name}`;
+            const info = purchased[key];
+            if (!info) return;
+            const { price, slot } = info;
+            budget.total.spent -= price;
+            budget.roles[role].spent -= price;
+            budget.roles[role].count -= 1;
+            if (slot) {
+                slotPurchases[role][slot] = Math.max((slotPurchases[role][slot] || 0) - 1, 0);
+            }
+            delete purchased[key];
+            savePurchased();
+            updateBudgetUI();
+            const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
+            if (el) {
+                el.classList.remove('bought');
+                const actions = el.querySelector('.player-actions');
+                const badge = actions.querySelector('.purchase-badge');
+                if (badge) badge.remove();
+            }
+            updateTargetsUI();
         }
 
         function checkAlerts(role) {
@@ -1416,7 +1444,7 @@
                     <div class="player-actions">
                         <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${player.prezzi.avg})">🎯</button>
                         <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
-                        ${purchasedInfo ? `<span class="purchase-badge">€${purchasedInfo.price}</span>` : ''}
+                        ${purchasedInfo ? `<button class="action-btn" onclick="event.stopPropagation(); unbuyPlayer('${player.nome}', '${role}')">🔄</button><span class=\"purchase-badge\">€${purchasedInfo.price}</span>` : ''}
                     </div>
                 </div>
             `;
