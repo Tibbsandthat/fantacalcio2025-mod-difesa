@@ -190,6 +190,27 @@
             border-left-color: #667eea;
         }
 
+        .player-card.bought {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        .player-actions {
+            display: flex;
+            gap: 6px;
+            margin-left: 10px;
+        }
+
+        .action-btn {
+            border: none;
+            background: #667eea;
+            color: white;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
         .player-info {
             flex: 1;
         }
@@ -620,6 +641,22 @@
                 </div>
 
                 <div class="sidebar-section">
+                    <div class="sidebar-title">💰 Budget</div>
+                    <ul class="recommendations">
+                        <li>Totale: <span id="budget-total">0</span>/<span id="budget-total-max">500</span></li>
+                        <li>P: <span id="budget-P">0</span>/<span id="budget-P-max">50</span> (<span id="count-P">0</span>/<span id="needed-P">3</span>)</li>
+                        <li>D: <span id="budget-D">0</span>/<span id="budget-D-max">160</span> (<span id="count-D">0</span>/<span id="needed-D">8</span>)</li>
+                        <li>C: <span id="budget-C">0</span>/<span id="budget-C-max">150</span> (<span id="count-C">0</span>/<span id="needed-C">8</span>)</li>
+                        <li>A: <span id="budget-A">0</span>/<span id="budget-A-max">140</span> (<span id="count-A">0</span>/<span id="needed-A">6</span>)</li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">🎯 Obiettivi</div>
+                    <ul class="recommendations" id="target-list"></ul>
+                </div>
+
+                <div class="sidebar-section">
                     <div class="ai-insights">
                         <div class="insight-title">🤖 AI Insights</div>
                         <div class="insight-text" id="ai-insight">
@@ -679,11 +716,24 @@ TOP - McTominay, Orsolini, Paz, Pulisic, Zaccagni, De Bruyne, ","n1":"","n2":"",
         let searchTerm = '';
         let currentFilters = {
             price: 'all',
-            reliability: 'all', 
+            reliability: 'all',
             opportunity: 'all',
             minPrice: 1,
             maxPrice: 100
         };
+
+        // Budget and target tracking
+        const budget = {
+            total: { max: 500, spent: 0 },
+            roles: {
+                'P': { max: 50, spent: 0, count: 0, needed: 3 },
+                'D': { max: 160, spent: 0, count: 0, needed: 8 },
+                'C': { max: 150, spent: 0, count: 0, needed: 8 },
+                'A': { max: 140, spent: 0, count: 0, needed: 6 }
+            }
+        };
+        const targets = {};
+        const purchased = {};
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -698,10 +748,12 @@ TOP - McTominay, Orsolini, Paz, Pulisic, Zaccagni, De Bruyne, ","n1":"","n2":"",
             // Calculate total players
             const totalPlayers = Object.values(PLAYERS_DB).reduce((sum, role) => sum + role.length, 0);
             document.getElementById('total-players').textContent = totalPlayers;
-            
+
             // Initialize range sliders
             document.getElementById('min-price').addEventListener('input', updatePriceRange);
             document.getElementById('max-price').addEventListener('input', updatePriceRange);
+            updateBudgetUI();
+            updateTargetsUI();
         }
 
         function setupEventListeners() {
@@ -861,6 +913,55 @@ TOP - McTominay, Orsolini, Paz, Pulisic, Zaccagni, De Bruyne, ","n1":"","n2":"",
             return 'average';
         }
 
+        function updateBudgetUI() {
+            document.getElementById('budget-total').textContent = budget.total.spent;
+            document.getElementById('budget-total-max').textContent = budget.total.max;
+            ['P','D','C','A'].forEach(role => {
+                document.getElementById(`budget-${role}`).textContent = budget.roles[role].spent;
+                document.getElementById(`budget-${role}-max`).textContent = budget.roles[role].max;
+                document.getElementById(`count-${role}`).textContent = budget.roles[role].count;
+                document.getElementById(`needed-${role}`).textContent = budget.roles[role].needed;
+            });
+        }
+
+        function updateTargetsUI() {
+            const list = document.getElementById('target-list');
+            if (!list) return;
+            list.innerHTML = Object.values(targets).map(t => `<li class="recommendation">${t.name} (${t.role}) - €${t.price}</li>`).join('');
+        }
+
+        function toggleTarget(name, role, price) {
+            const key = `${role}:${name}`;
+            if (targets[key]) {
+                delete targets[key];
+            } else {
+                targets[key] = { name, role, price };
+            }
+            updateTargetsUI();
+        }
+
+        function buyPlayer(name, price, role) {
+            const key = `${role}:${name}`;
+            if (purchased[key]) return;
+            purchased[key] = true;
+            budget.total.spent += price;
+            budget.roles[role].spent += price;
+            budget.roles[role].count += 1;
+            updateBudgetUI();
+            const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
+            if (el) el.classList.add('bought');
+            delete targets[key];
+            updateTargetsUI();
+            checkAlerts(role);
+        }
+
+        function checkAlerts(role) {
+            const remaining = budget.roles[role].needed - budget.roles[role].count;
+            if (remaining <= 1) {
+                alert(`Attenzione! Rimangono ${remaining} giocatori da acquistare nel ruolo ${role}`);
+            }
+        }
+
         function createPlayerCard(playerArray, role) {
             const player = decodePlayer(playerArray, role);
             const opportunity = getOpportunityLevel(player);
@@ -880,8 +981,8 @@ TOP - McTominay, Orsolini, Paz, Pulisic, Zaccagni, De Bruyne, ","n1":"","n2":"",
             };
 
             return `
-                <div class="player-card" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
-                    <div style="position: relative;">
+                <div class="player-card" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
+                    <div style="position: relative; flex:1;">
                         ${opportunity === 'high' ? '<div class="opportunity-badge">🔥</div>' : ''}
                         <div class="player-info">
                             <div class="player-name">${roleIcons[role]} ${player.nome}</div>
@@ -916,6 +1017,10 @@ TOP - McTominay, Orsolini, Paz, Pulisic, Zaccagni, De Bruyne, ","n1":"","n2":"",
                                 €${player.prezzi.min}-${player.prezzi.max}
                             </div>
                         </div>
+                    </div>
+                    <div class="player-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${player.prezzi.avg})">🎯</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); buyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
                     </div>
                 </div>
             `;
