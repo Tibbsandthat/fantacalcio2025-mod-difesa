@@ -278,21 +278,16 @@
         .stat-badge.good { background: var(--color-warning); color: #000; }
         .stat-badge.average { background: var(--color-secondary); }
 
-        .player-price {
-            text-align: center;
-            margin-left: 8px;
-        }
-
         .smart-price {
             font-size: var(--font-lg);
             font-weight: 600;
-            color: var(--color-primary);
             margin-bottom: 2px;
+            color: inherit;
         }
 
         .price-range {
             font-size: var(--font-sm);
-            color: var(--text-muted);
+            color: inherit;
         }
 
         .price-badge {
@@ -302,7 +297,8 @@
             align-items: flex-end;
             padding: 4px 8px;
             border-radius: var(--radius);
-            color: #fff;
+            background: var(--color-secondary);
+            color: var(--text-color);
         }
 
         .opportunity-badge {
@@ -801,8 +797,8 @@
                     </div>
                     <div class="price-range-slider">
                         <label class="filter-label">Range di Prezzo</label>
-                        <input type="range" class="range-input" id="min-price" min="1" max="200" value="1">
-                        <input type="range" class="range-input" id="max-price" min="1" max="200" value="200">
+                        <input type="range" class="range-input" id="min-price" min="1" max="200" value="1" step="1">
+                        <input type="range" class="range-input" id="max-price" min="1" max="200" value="200" step="1">
                         <div class="range-values">
                             <span id="min-price-val">1</span>
                             <span id="max-price-val">200</span>
@@ -931,15 +927,16 @@
                 const [role, name] = key.split(':');
                 const roleSlots = getRoleSlots(role);
                 const slot = data.slot || targets[key]?.slot || roleSlots[roleSlots.length - 1];
-                purchased[key] = { ...data, slot };
-                budget.total.spent += data.price;
+                const price = Math.round(data.price);
+                purchased[key] = { ...data, slot, price };
+                budget.total.spent += price;
                 budget.roles[role] = budget.roles[role] || { spent: 0, count: 0 };
-                budget.roles[role].spent += data.price;
+                budget.roles[role].spent += price;
                 budget.roles[role].count += 1;
                 slotPurchases[role][slot] = (slotPurchases[role][slot] || 0) + 1;
-                targets[key] = targets[key] || { name, role, price: data.price, slot };
+                targets[key] = targets[key] || { name, role, price, slot };
                 targets[key].slot = targets[key].slot || slot;
-                targets[key].price = data.price;
+                targets[key].price = price;
             });
             const othersSaved = JSON.parse(localStorage.getItem('others') || '{}');
             Object.entries(othersSaved).forEach(([key, data]) => {
@@ -1210,9 +1207,9 @@
                 nome: playerArray[0],
                 team: playerArray[1],
                 prezzi: {
-                    min: playerArray[2][0],
-                    max: playerArray[2][1],
-                    avg: playerArray[2][2]
+                    min: Math.round(playerArray[2][0]),
+                    max: Math.round(playerArray[2][1]),
+                    avg: Math.round(playerArray[2][2])
                 },
                 stats: playerArray[3],
                 fascia: role === 'P' ? playerArray[5] : (role === 'D' ? playerArray[5] : playerArray[6]),
@@ -1308,9 +1305,9 @@
             const remainingSlots = roleData.needed - roleData.count;
             const perSlot = remainingSlots > 0 ? Math.floor(remainingBudget / remainingSlots) : 0;
             return {
-                ideal: Math.min(player.prezzi.min, perSlot),
-                suggested: Math.min(player.prezzi.avg, perSlot),
-                max: Math.min(player.prezzi.max, remainingBudget)
+                ideal: Math.round(Math.min(player.prezzi.min, perSlot)),
+                suggested: Math.round(Math.min(player.prezzi.avg, perSlot)),
+                max: Math.round(Math.min(player.prezzi.max, remainingBudget))
             };
         }
 
@@ -1424,15 +1421,15 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="player-price">
-                                <div class="smart-price">€${price}</div>
+                            <div class="price-badge">
+                                <div class="smart-price">${Math.round(price)}</div>
                             </div>
                             <div class="player-actions">
-                                <button class="action-btn" onclick="toggleTarget('${t.name}', '${role}', ${t.price})">❌</button>
+                                <button class="action-btn" onclick="toggleTarget('${t.name}', '${role}', ${Math.round(t.price)})">❌</button>
                                 <button class="action-btn" onclick="editTarget('${key}')">✏️</button>
-                                <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${price}, '${role}')">💸</button>
+                                <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${Math.round(price)}, '${role}')">💸</button>
                                 <button class="action-btn" onclick="${othersInfo ? `unmarkBoughtElsewhere('${t.name}', '${role}')` : `markBoughtElsewhere('${t.name}', '${role}')`}">🚫</button>
-                                ${purchasedInfo ? `<button class="action-btn" onclick="unbuyPlayer('${t.name}', '${role}')">🔄</button><span class=\"purchase-badge\">€${purchasedInfo.price}</span>` : ''}
+                                ${purchasedInfo ? `<button class="action-btn" onclick="unbuyPlayer('${t.name}', '${role}')">🔄</button><span class=\"purchase-badge\">${Math.round(purchasedInfo.price)}</span>` : ''}
                             </div>
                         </div>`;
                     });
@@ -1474,9 +1471,9 @@
                         const key = `${t.role}:${t.name}`;
                         const price = purchased[key]?.price ?? t.price;
                         if (t.prices) {
-                            html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • €${price}${t.targetPrice ? ` (TP: €${t.targetPrice})` : ''}</li>`;
+                            html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>`;
                         } else {
-                            html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - €${price}${t.targetPrice ? ` (TP: €${t.targetPrice})` : ''}</li>`;
+                            html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>`;
                         }
                     });
                 });
@@ -1485,6 +1482,7 @@
         }
 
         function toggleTarget(name, role, price) {
+            price = Math.round(price);
             const key = `${role}:${name}`;
             if (targets[key]) {
                 delete targets[key];
@@ -1506,6 +1504,7 @@
         }
 
         function promptBuyPlayer(name, defaultPrice, role) {
+            defaultPrice = Math.round(defaultPrice);
             const input = prompt(`Prezzo pagato per ${name}?`, defaultPrice);
             const price = parseInt(input, 10);
             if (input === null || input.trim() === '' || isNaN(price)) return;
@@ -1523,6 +1522,7 @@
         }
 
         function buyPlayer(name, price, role) {
+            price = Math.round(price);
             const key = `${role}:${name}`;
             if (purchased[key]) return;
             let slot = targets[key]?.slot;
@@ -1553,7 +1553,7 @@
                     badge.className = 'purchase-badge';
                     actions.appendChild(badge);
                 }
-                badge.textContent = `€${price}`;
+                badge.textContent = `${price}`;
             }
             targets[key] = targets[key] || { name, role, price, slot };
             targets[key].price = price;
@@ -1629,11 +1629,6 @@
             const key = `${role}:${player.nome}`;
             const purchasedInfo = purchased[key];
             const othersInfo = others[key];
-            const opportunityColors = {
-                'high': 'var(--color-success)',
-                'medium': 'var(--color-warning)',
-                'low': 'var(--color-secondary)'
-            };
 
             const roleIcons = {
                 'P': '🥅',
@@ -1673,19 +1668,19 @@
                                 ` : ''}
                             </div>
                         </div>
-                        <div class="price-badge" style="background-color: ${opportunityColors[opportunity]}; margin-left: auto;">
-                            <div class="smart-price" style="color: inherit;">
-                                €${player.prezzi.avg}
+                        <div class="price-badge">
+                            <div class="smart-price">
+                                ${Math.round(player.prezzi.avg)}
                             </div>
                             <div class="price-range">
-                                €${player.prezzi.min}-${player.prezzi.max}
+                                ${Math.round(player.prezzi.min)}-${Math.round(player.prezzi.max)}
                             </div>
                         </div>
                     </div>
                     <div class="player-actions">
-                        <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${player.prezzi.avg})">🎯</button>
-                        <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
-                        ${purchasedInfo ? `<button class="action-btn" onclick="event.stopPropagation(); unbuyPlayer('${player.nome}', '${role}')">🔄</button><span class=\"purchase-badge\">€${purchasedInfo.price}</span>` : ''}
+                        <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${Math.round(player.prezzi.avg)})">🎯</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${Math.round(player.prezzi.avg)}, '${role}')">💸</button>
+                        ${purchasedInfo ? `<button class="action-btn" onclick="event.stopPropagation(); unbuyPlayer('${player.nome}', '${role}')">🔄</button><span class=\"purchase-badge\">${Math.round(purchasedInfo.price)}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -1781,7 +1776,7 @@
                         ${roleIcons[opp.role]} ${opp.nome} (${opp.team})
                     </div>
                     <div class="recommendation-price">
-                        Target: €${opp.targetPrice} (Risparmio: €${opp.savings}) • Affidabilità: ${opp.reliability}/5 • Forma: ${opp.recentForm.toFixed(2)}
+                        Target: ${Math.round(opp.targetPrice)} crediti (Risparmio: ${Math.round(opp.savings)} crediti) • Affidabilità: ${opp.reliability}/5 • Forma: ${opp.recentForm.toFixed(2)}
                     </div>
                 </li>
             `).join('') || '<li class="recommendation"><div class="recommendation-text">Nessuna opportunità con i filtri attuali</div></li>';
@@ -1805,7 +1800,7 @@
 
             const topPlayers = highReliability.slice(0, 3);
             const insightText = topPlayers.length
-                ? `Giocatori affidabili a basso costo: ${topPlayers.map(p => `${roleIcons[p.role]} ${p.nome} €${p.prezzi.avg}`).join(', ')}`
+                ? `Giocatori affidabili a basso costo: ${topPlayers.map(p => `${roleIcons[p.role]} ${p.nome} ${Math.round(p.prezzi.avg)} crediti`).join(', ')}`
                 : 'Nessun giocatore affidabile trovato.';
 
             document.getElementById('ai-insight').textContent = insightText;
@@ -1834,15 +1829,15 @@
                         <div class="detail-title">💰 Analisi Prezzi Smart</div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
                             <div style="text-align: center;">
-                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-warning);">€${player.prezzi.min}</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-warning);">${player.prezzi.min} crediti</div>
                                 <div style="font-size: var(--font-base); color: var(--text-muted);">Minimo</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-size: 1.8rem; font-weight: 600; color: var(--color-primary);">€${player.prezzi.avg}</div>
+                                <div style="font-size: 1.8rem; font-weight: 600; color: var(--color-primary);">${player.prezzi.avg} crediti</div>
                                 <div style="font-size: var(--font-base); color: var(--text-muted);">Consenso</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-success);">€${player.prezzi.max}</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-success);">${player.prezzi.max} crediti</div>
                                 <div style="font-size: var(--font-base); color: var(--text-muted);">Massimo</div>
                             </div>
                         </div>
@@ -1855,7 +1850,7 @@
                 detailsHtml += `
                     <div class="source-price">
                         <div class="source-name">${cleanSource}</div>
-                        <div class="source-value">€${price}</div>
+                        <div class="source-value">${Math.round(price)} crediti</div>
                     </div>
                 `;
             });
@@ -1904,9 +1899,9 @@
                     <div class="detail-section">
                         <div class="detail-title">🎯 Raccomandazione AI</div>
                         <div style="background: var(--card-bg); padding: 15px; border-radius: var(--radius); border-left: 4px solid var(--color-primary);">
-                            <strong>Ideale:</strong> €${priceHints.ideal}<br>
-                            <strong>Suggerito:</strong> €${priceHints.suggested}<br>
-                            <strong>Massimo:</strong> €${priceHints.max}<br>
+                            <strong>Ideale:</strong> ${priceHints.ideal} crediti<br>
+                            <strong>Suggerito:</strong> ${priceHints.suggested} crediti<br>
+                            <strong>Massimo:</strong> ${priceHints.max} crediti<br>
                             <strong>Opportunità:</strong> ${getOpportunityLevel(player).toUpperCase()}<br>
                             <strong>Strategia:</strong> ${getOpportunityLevel(player) === 'high' ? 'Punta al prezzo minimo, alta volatilità' : 'Prezzo stabile, offri vicino al consenso'}
                         </div>
