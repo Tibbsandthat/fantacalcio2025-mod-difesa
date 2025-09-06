@@ -139,6 +139,30 @@ def main() -> None:
     with Path("players_database.json").open("w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
+    def _ensure_notes(path: Path) -> None:
+        """Ensure a notes object is present before the allPrices dict."""
+        if not path.exists():
+            return
+        data = json.loads(path.read_text(encoding="utf-8"))
+        note_template = {
+            "comm": "",
+            "n1": "",
+            "n2": "",
+            "n3": "",
+            "n4": "",
+            "n5": "",
+        }
+        updated: list[list] = []
+        for row in data:
+            if len(row) >= 7 and isinstance(row[6], dict) and "comm" in row[6]:
+                updated.append(row)
+            else:
+                updated.append(row[:6] + [note_template.copy()] + row[6:])
+        path.write_text(json.dumps(updated, ensure_ascii=False), encoding="utf-8")
+
+    for fname in ("portieri_db.json", "difensori_db.json"):
+        _ensure_notes(Path(fname))
+
 
 if __name__ == "__main__":  # pragma: no cover
     main()
