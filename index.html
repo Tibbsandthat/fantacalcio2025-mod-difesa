@@ -743,6 +743,10 @@
 </head>
 <body>
     <div class="container">
+        <div class="nav-tabs">
+            <button id="nav-home" class="nav-btn active">Lista</button>
+            <button id="nav-targets" class="nav-btn">Targets</button>
+        </div>
         <div id="main-view">
         <div class="search-container">
             <div class="search-box">
@@ -757,11 +761,6 @@
                 <button class="filter-btn" data-role="A">⚔️ Attaccanti</button>
             </div>
         </div>
-        <div class="nav-tabs">
-            <button id="nav-home" class="nav-btn active">Lista</button>
-            <button id="nav-targets" class="nav-btn">Targets</button>
-        </div>
-
         <div class="main-content">
             <div class="players-section">
                 <div class="advanced-filters">
@@ -856,6 +855,7 @@
         </div>
 
         <div id="targets-view">
+            <button id="targets-back" class="nav-btn" style="margin-bottom:10px;">⬅️ Back</button>
             <h2 style="text-align:center; margin:20px 0;">Squad Planner</h2>
             <div class="planner-container" id="squad-planner"></div>
             <div class="players-grid" id="targets-grid"></div>
@@ -866,6 +866,7 @@
     <div id="player-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
+            <button id="modal-back" class="nav-btn" style="margin:10px 0;">⬅️ Back</button>
             <div id="player-details"></div>
         </div>
     </div>
@@ -957,6 +958,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            history.replaceState({ view: 'main' }, '');
             loadPurchased();
             updateBudgetUI();
             updateTargetsUI();
@@ -1003,6 +1005,7 @@
 
             updateBudgetUI();
             updateTargetsUI();
+            renderPlayers();
         }
 
         function setupEventListeners() {
@@ -1022,11 +1025,16 @@
             // Modal
             const modal = document.getElementById('player-modal');
             const closeModal = modal.querySelector('.close');
-            closeModal.addEventListener('click', () => modal.style.display = 'none');
+            closeModal.addEventListener('click', () => history.back());
+            const modalBack = document.getElementById('modal-back');
+            modalBack.addEventListener('click', () => history.back());
 
             window.addEventListener('click', (e) => {
-                if (e.target === modal) modal.style.display = 'none';
+                if (e.target === modal) history.back();
             });
+
+            const targetsBack = document.getElementById('targets-back');
+            targetsBack.addEventListener('click', () => history.back());
 
             renderSquadPlanner();
             setupSquadPlanner();
@@ -1165,20 +1173,22 @@
             renderPlayers();
         }
 
-        function showMainView() {
+        function showMainView(push = true) {
             document.getElementById('main-view').style.display = 'block';
             document.getElementById('targets-view').style.display = 'none';
             document.getElementById('nav-home').classList.add('active');
             document.getElementById('nav-targets').classList.remove('active');
             renderPlayers();
+            if (push) history.pushState({ view: 'main' }, '');
         }
 
-        function showTargetsView() {
+        function showTargetsView(push = true) {
             document.getElementById('main-view').style.display = 'none';
             document.getElementById('targets-view').style.display = 'block';
             document.getElementById('nav-home').classList.remove('active');
             document.getElementById('nav-targets').classList.add('active');
             updateTargetsUI();
+            if (push) history.pushState({ view: 'targets' }, '');
         }
 
         function updatePriceRange() {
@@ -1233,7 +1243,9 @@
         function filterPlayers(players, role) {
             return players.filter(playerArray => {
                 const player = decodePlayer(playerArray, role);
-                
+                const key = `${role}:${player.nome}`;
+                if (targets[key]) return false;
+
                 // Search filter
                 if (searchTerm) {
                     const searchStr = `${player.nome} ${player.team}`.toLowerCase();
@@ -1325,6 +1337,7 @@
             });
             updateBudgetUI();
             updateTargetsUI();
+            renderPlayers();
         }
 
         function saveStrategy() {
@@ -1448,6 +1461,7 @@
                         }
                         updateBudgetUI();
                         updateTargetsUI();
+                        renderPlayers();
                     });
                 });
             }
@@ -1501,6 +1515,7 @@
                     : { name, role, price, slot };
             }
             updateTargetsUI();
+            renderPlayers();
         }
 
         function promptBuyPlayer(name, defaultPrice, role) {
@@ -1518,6 +1533,7 @@
             if (newPrice !== null && !isNaN(newPrice)) {
                 target.price = parseInt(newPrice, 10);
                 updateTargetsUI();
+                renderPlayers();
             }
         }
 
@@ -1559,6 +1575,7 @@
             targets[key].price = price;
             targets[key].slot = targets[key].slot || slot;
             updateTargetsUI();
+            renderPlayers();
             checkAlerts(role);
             checkSlotAlert(role, slot);
             if (price < hints.ideal || price < hints.suggested) {
@@ -1589,6 +1606,7 @@
                 if (badge) badge.remove();
             }
             updateTargetsUI();
+            renderPlayers();
         }
 
         function markBoughtElsewhere(name, role) {
@@ -1601,6 +1619,7 @@
                 el.classList.add('bought-elsewhere');
             }
             updateTargetsUI();
+            renderPlayers();
         }
 
         function unmarkBoughtElsewhere(name, role) {
@@ -1613,6 +1632,7 @@
                 el.classList.remove('bought-elsewhere');
             }
             updateTargetsUI();
+            renderPlayers();
         }
 
         function checkAlerts(role) {
@@ -1807,7 +1827,7 @@
             setTimeout(generateAIInsights, 10000);
         }
 
-        function showPlayerDetails(playerName, role) {
+        function showPlayerDetails(playerName, role, push = true) {
             const players = PLAYERS_DB[role] || [];
             const playerArray = players.find(p => p[0] === playerName);
             
@@ -1911,7 +1931,25 @@
 
             detailsContainer.innerHTML = detailsHtml;
             modal.style.display = 'flex';
+            if (push) history.pushState({ view: 'player', player: playerName, role }, '');
         }
+
+        window.onpopstate = (event) => {
+            const modal = document.getElementById('player-modal');
+            if (event.state && event.state.view === 'player') {
+                showPlayerDetails(event.state.player, event.state.role, false);
+                return;
+            }
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                return;
+            }
+            if (event.state && event.state.view === 'targets') {
+                showTargetsView(false);
+            } else {
+                showMainView(false);
+            }
+        };
 
         // Add loading completion
         setTimeout(() => {
