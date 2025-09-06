@@ -73,6 +73,41 @@ def load_source(path: Path) -> list[dict]:
     return result
 
 
+def load_stats() -> dict[tuple[str, str], dict]:
+    """Load existing stats (t, a, i, f) from role-specific JSON files.
+
+    The legacy `*_db.json` files store each player as an array where the
+    fourth element is a stats object with the desired metrics. We build a
+    mapping keyed by ``(name, role)`` so that the aggregated database can
+    reuse these values. If a player is missing we will later fall back to
+    zeroed stats.
+    """
+
+    role_files = {
+        "P": "portieri_db.json",
+        "D": "difensori_db.json",
+        "C": "centrocampisti_db.json",
+        "A": "attaccanti_db.json",
+    }
+    stats_map: dict[tuple[str, str], dict] = {}
+    for role, fname in role_files.items():
+        path = Path(fname)
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        for entry in data:
+            if not isinstance(entry, list) or len(entry) < 4:
+                continue
+            stats = entry[3] if isinstance(entry[3], dict) else {}
+            for key in ("t", "a", "i", "f"):
+                stats.setdefault(key, 0)
+            stats_map[(entry[0], role)] = stats
+    return stats_map
+
+
 def main() -> None:
     frames: list[dict] = []
     for season, sources in SOURCES.items():
@@ -93,6 +128,7 @@ def main() -> None:
         key = (row["name"], row["role"])
         data_by_player.setdefault(key, []).append(row)
 
+    stats_map = load_stats()
     result: dict[str, list[dict]] = {}
     for (name, role), grp in data_by_player.items():
         prices = [float(r.get("price", 0) or 0) for r in grp]
@@ -103,6 +139,7 @@ def main() -> None:
             "nome": name,
             "team": grp[0].get("team", ""),
             "prezzi": {"min": min_p, "max": max_p, "avg": avg},
+            "stats": stats_map.get((name, role), {"t": 0, "a": 0, "i": 0, "f": 0}),
             "allPrices": {},
             "performance": {},
             "notes": {"comm": ""},
