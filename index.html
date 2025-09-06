@@ -1504,6 +1504,8 @@
                 container.querySelectorAll('.player-card').forEach(card => {
                     card.addEventListener('click', e => {
                         if (e.target.closest('.action-btn') || e.target.closest('.slot-select')) return;
+                    });
+
                         showPlayerDetails(card.dataset.name, card.dataset.role);
                     });
                 });
