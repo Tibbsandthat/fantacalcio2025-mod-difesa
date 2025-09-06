@@ -759,39 +759,6 @@
                     </ul>
                 </div>
 
-                <div class="sidebar-section">
-                    <div class="sidebar-title">📌 Slots Planner</div>
-                    <table class="slots-planner">
-                        <tr>
-                            <th>R</th><th>Top</th><th>SemiTop</th><th>Jolly</th>
-                        </tr>
-                        <tr>
-                            <td>P</td>
-                            <td><input type="number" class="slot-input" id="slot-plan-P-Top" min="0" value="0"> <small id="slot-count-P-Top">0/0</small></td>
-                            <td><input type="number" class="slot-input" id="slot-plan-P-SemiTop" min="0" value="0"> <small id="slot-count-P-SemiTop">0/0</small></td>
-                            <td><input type="number" class="slot-input" id="slot-plan-P-Jolly" min="0" value="0"> <small id="slot-count-P-Jolly">0/0</small></td>
-                        </tr>
-                        <tr>
-                            <td>D</td>
-                            <td><input type="number" class="slot-input" id="slot-plan-D-Top" min="0" value="0"> <small id="slot-count-D-Top">0/0</small></td>
-                            <td><input type="number" class="slot-input" id="slot-plan-D-SemiTop" min="0" value="0"> <small id="slot-count-D-SemiTop">0/0</small></td>
-                            <td><input type="number" class="slot-input" id="slot-plan-D-Jolly" min="0" value="0"> <small id="slot-count-D-Jolly">0/0</small></td>
-                        </tr>
-                        <tr>
-                            <td>C</td>
-                            <td><input type="number" class="slot-input" id="slot-plan-C-Top" min="0" value="0"> <small id="slot-count-C-Top">0/0</small></td>
-                            <td><input type="number" class="slot-input" id="slot-plan-C-SemiTop" min="0" value="0"> <small id="slot-count-C-SemiTop">0/0</small></td>
-                            <td><input type="number" class="slot-input" id="slot-plan-C-Jolly" min="0" value="0"> <small id="slot-count-C-Jolly">0/0</small></td>
-                        </tr>
-                        <tr>
-                            <td>A</td>
-                            <td><input type="number" class="slot-input" id="slot-plan-A-Top" min="0" value="0"> <small id="slot-count-A-Top">0/0</small></td>
-                            <td><input type="number" class="slot-input" id="slot-plan-A-SemiTop" min="0" value="0"> <small id="slot-count-A-SemiTop">0/0</small></td>
-                            <td><input type="number" class="slot-input" id="slot-plan-A-Jolly" min="0" value="0"> <small id="slot-count-A-Jolly">0/0</small></td>
-                        </tr>
-                    </table>
-                </div>
-
                 <details class="sidebar-card">
                     <summary class="sidebar-card-title">🤖 AI Insights</summary>
                     <div class="insight-text" id="ai-insight">
@@ -812,6 +779,40 @@
         </div>
 
         <div id="targets-view">
+            <h2 style="text-align:center; margin:20px 0;">Squad Planner</h2>
+            <table class="slots-planner" id="squad-planner">
+                <tr>
+                    <th>R</th><th>1</th><th>2</th><th>3</th><th>4</th>
+                </tr>
+                <tr>
+                    <td>P</td>
+                    <td><input type="number" class="slot-input" id="slot-plan-P-1" min="0" value="0"> <small id="slot-count-P-1">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-P-2" min="0" value="0"> <small id="slot-count-P-2">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-P-3" min="0" value="0"> <small id="slot-count-P-3">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-P-4" min="0" value="0"> <small id="slot-count-P-4">0/0</small></td>
+                </tr>
+                <tr>
+                    <td>D</td>
+                    <td><input type="number" class="slot-input" id="slot-plan-D-1" min="0" value="0"> <small id="slot-count-D-1">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-D-2" min="0" value="0"> <small id="slot-count-D-2">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-D-3" min="0" value="0"> <small id="slot-count-D-3">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-D-4" min="0" value="0"> <small id="slot-count-D-4">0/0</small></td>
+                </tr>
+                <tr>
+                    <td>C</td>
+                    <td><input type="number" class="slot-input" id="slot-plan-C-1" min="0" value="0"> <small id="slot-count-C-1">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-C-2" min="0" value="0"> <small id="slot-count-C-2">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-C-3" min="0" value="0"> <small id="slot-count-C-3">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-C-4" min="0" value="0"> <small id="slot-count-C-4">0/0</small></td>
+                </tr>
+                <tr>
+                    <td>A</td>
+                    <td><input type="number" class="slot-input" id="slot-plan-A-1" min="0" value="0"> <small id="slot-count-A-1">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-A-2" min="0" value="0"> <small id="slot-count-A-2">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-A-3" min="0" value="0"> <small id="slot-count-A-3">0/0</small></td>
+                    <td><input type="number" class="slot-input" id="slot-plan-A-4" min="0" value="0"> <small id="slot-count-A-4">0/0</small></td>
+                </tr>
+            </table>
             <div class="players-grid" id="targets-grid"></div>
         </div>
     </div>
@@ -852,25 +853,25 @@
         const targets = JSON.parse(localStorage.getItem('targets') || '{}');
         const purchased = {};
         const others = {};
-        const slotTypes = ['Top', 'SemiTop', 'Jolly'];
+        const slotTypes = ['1', '2', '3', '4'];
         const slotPlan = {
-            'P': { Top: 0, SemiTop: 0, Jolly: 0 },
-            'D': { Top: 0, SemiTop: 0, Jolly: 0 },
-            'C': { Top: 0, SemiTop: 0, Jolly: 0 },
-            'A': { Top: 0, SemiTop: 0, Jolly: 0 }
+            'P': { '1': 0, '2': 0, '3': 0, '4': 0 },
+            'D': { '1': 0, '2': 0, '3': 0, '4': 0 },
+            'C': { '1': 0, '2': 0, '3': 0, '4': 0 },
+            'A': { '1': 0, '2': 0, '3': 0, '4': 0 }
         };
         const slotPurchases = {
-            'P': { Top: 0, SemiTop: 0, Jolly: 0 },
-            'D': { Top: 0, SemiTop: 0, Jolly: 0 },
-            'C': { Top: 0, SemiTop: 0, Jolly: 0 },
-            'A': { Top: 0, SemiTop: 0, Jolly: 0 }
+            'P': { '1': 0, '2': 0, '3': 0, '4': 0 },
+            'D': { '1': 0, '2': 0, '3': 0, '4': 0 },
+            'C': { '1': 0, '2': 0, '3': 0, '4': 0 },
+            'A': { '1': 0, '2': 0, '3': 0, '4': 0 }
         };
 
         function loadPurchased() {
             const saved = JSON.parse(localStorage.getItem('purchased') || '{}');
             Object.entries(saved).forEach(([key, data]) => {
                 const [role, name] = key.split(':');
-                const slot = data.slot || targets[key]?.slot || 'Jolly';
+                const slot = data.slot || targets[key]?.slot || '4';
                 purchased[key] = { ...data, slot };
                 budget.total.spent += data.price;
                 budget.roles[role] = budget.roles[role] || { spent: 0, count: 0 };
@@ -964,10 +965,10 @@
                 if (e.target === modal) modal.style.display = 'none';
             });
 
-            setupSlotPlanner();
+            setupSquadPlanner();
         }
 
-        function setupSlotPlanner() {
+        function setupSquadPlanner() {
             ['P','D','C','A'].forEach(role => {
                 slotTypes.forEach(slot => {
                     const input = document.getElementById(`slot-plan-${role}-${slot}`);
@@ -1249,34 +1250,59 @@
             const container = document.getElementById('targets-grid');
             if (container) {
                 const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
-                const slotCounts = { 'P': 0, 'D': 0, 'C': 0, 'A': 0 };
-                const cards = Object.entries(targets).map(([key, t]) => {
-                    slotCounts[t.role]++;
-                    const slot = slotCounts[t.role];
-                    const purchasedInfo = purchased[key];
-                    const othersInfo = others[key];
-                    const price = purchasedInfo?.price ?? t.price;
-                    const boughtClass = purchasedInfo ? 'bought' : '';
-                    const externalClass = othersInfo ? 'bought-elsewhere' : '';
-                    return `
+                const grouped = { 'P': [], 'D': [], 'C': [], 'A': [] };
+                Object.entries(targets).forEach(([key, t]) => {
+                    grouped[t.role].push([key, t]);
+                });
+                let html = '';
+                ['P','D','C','A'].forEach(role => {
+                    if (!grouped[role].length) return;
+                    html += `<h3>${roleIcons[role] ?? role}</h3>`;
+                    grouped[role].forEach(([key, t]) => {
+                        const purchasedInfo = purchased[key];
+                        const othersInfo = others[key];
+                        const price = purchasedInfo?.price ?? t.price;
+                        const boughtClass = purchasedInfo ? 'bought' : '';
+                        const externalClass = othersInfo ? 'bought-elsewhere' : '';
+                        html += `
                         <div class="player-card ${boughtClass} ${externalClass}">
                             <div class="player-info">
-                                <div class="player-name">${roleIcons[t.role] ?? ''} ${t.name}</div>
-                                <div class="player-team">Ruolo: ${t.role} • Slot ${slot}</div>
+                                <div class="player-name">${roleIcons[role] ?? ''} ${t.name}</div>
+                                <div class="player-team">Ruolo: ${role} • Slot 
+                                    <select class="slot-select" data-key="${key}" data-role="${role}">
+                                        ${slotTypes.map(s => `<option value="${s}" ${t.slot == s ? 'selected' : ''}>${s}</option>`).join('')}
+                                    </select>
+                                </div>
                             </div>
                             <div class="player-price">
                                 <div class="smart-price">€${price}</div>
                             </div>
                             <div class="player-actions">
-                                <button class="action-btn" onclick="toggleTarget('${t.name}', '${t.role}', ${t.price})">❌</button>
+                                <button class="action-btn" onclick="toggleTarget('${t.name}', '${role}', ${t.price})">❌</button>
                                 <button class="action-btn" onclick="editTarget('${key}')">✏️</button>
-                                <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${price}, '${t.role}')">💸</button>
-                                <button class="action-btn" onclick="${othersInfo ? `unmarkBoughtElsewhere('${t.name}', '${t.role}')` : `markBoughtElsewhere('${t.name}', '${t.role}')`}">🚫</button>
-                                ${purchasedInfo ? `<button class="action-btn" onclick="unbuyPlayer('${t.name}', '${t.role}')">🔄</button><span class=\"purchase-badge\">€${purchasedInfo.price}</span>` : ''}
+                                <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${price}, '${role}')">💸</button>
+                                <button class="action-btn" onclick="${othersInfo ? `unmarkBoughtElsewhere('${t.name}', '${role}')` : `markBoughtElsewhere('${t.name}', '${role}')`}">🚫</button>
+                                ${purchasedInfo ? `<button class="action-btn" onclick="unbuyPlayer('${t.name}', '${role}')">🔄</button><span class=\"purchase-badge\">€${purchasedInfo.price}</span>` : ''}
                             </div>
                         </div>`;
-                }).join('');
-                container.innerHTML = cards || '<p>Nessun obiettivo selezionato</p>';
+                    });
+                });
+                container.innerHTML = html || '<p>Nessun obiettivo selezionato</p>';
+                container.querySelectorAll('.slot-select').forEach(sel => {
+                    sel.addEventListener('change', e => {
+                        const key = e.target.dataset.key;
+                        const role = e.target.dataset.role;
+                        const prevSlot = targets[key].slot;
+                        const newSlot = e.target.value;
+                        targets[key].slot = newSlot;
+                        if (purchased[key]) {
+                            slotPurchases[role][prevSlot] = Math.max((slotPurchases[role][prevSlot] || 0) - 1, 0);
+                            slotPurchases[role][newSlot] = (slotPurchases[role][newSlot] || 0) + 1;
+                        }
+                        updateBudgetUI();
+                        updateTargetsUI();
+                    });
+                });
             }
 
             // Render simple list (if present)
@@ -1308,7 +1334,7 @@
             }
         }
 
-        function toggleTarget(name, role) {
+        function toggleTarget(name, role, price) {
             const key = `${role}:${name}`;
             if (targets[key]) {
                 delete targets[key];
@@ -1318,7 +1344,7 @@
                 }
             } else {
                 const player = findPlayer(name, role);
-                let slot = prompt('Seleziona slot (Top, SemiTop, Jolly):', 'Top');
+                let slot = prompt('Seleziona slot (1-4):', '4');
                 if (!slotTypes.includes(slot)) return;
                 const prices = player ? calculateTargetPrices(player, role) : undefined;
                 targets[key] = prices
@@ -1350,8 +1376,8 @@
             if (purchased[key]) return;
             let slot = targets[key]?.slot;
             if (!slot) {
-                slot = prompt('Seleziona slot per acquisto (Top, SemiTop, Jolly):', 'Jolly');
-                if (!slotTypes.includes(slot)) slot = 'Jolly';
+                slot = prompt('Seleziona slot per acquisto (1-4):', '4');
+                if (!slotTypes.includes(slot)) slot = '4';
             }
             const player = findPlayer(name, role);
             const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
