@@ -1222,7 +1222,7 @@
         }
 
         function decodePlayer(playerArray, role) {
-            // Decode player data structure based on role
+            if (!Array.isArray(playerArray)) return playerArray;
             const baseData = {
                 nome: playerArray[0],
                 team: playerArray[1],
@@ -1231,20 +1231,26 @@
                     max: Math.round(playerArray[2][1]),
                     avg: Math.round(playerArray[2][2])
                 },
-                stats: playerArray[3],
-                fascia: role === 'P' ? playerArray[5] : (role === 'D' ? playerArray[5] : playerArray[6]),
-                allPrices: role === 'P' ? playerArray[6] : (role === 'D' ? playerArray[6] : playerArray[8])
+                stats: playerArray[3]
             };
 
-            // Add role-specific advanced stats
-            if (role === 'P') {
+            if (role === 'P' || role === 'D') {
                 baseData.advanced = playerArray[4];
-            } else if (role === 'D') {
-                baseData.advanced = playerArray[4];
+                if (playerArray.length >= 9) {
+                    baseData.performance = playerArray[5];
+                    baseData.fascia = playerArray[6];
+                    baseData.notes = playerArray[7] || {};
+                    baseData.allPrices = playerArray[8];
+                } else {
+                    baseData.fascia = playerArray[5];
+                    baseData.allPrices = playerArray[6];
+                }
             } else if (role === 'C' || role === 'A') {
                 baseData.performance = playerArray[4];
                 baseData.discipline = playerArray[5];
-                baseData.notes = playerArray[7];
+                baseData.fascia = playerArray[6];
+                baseData.notes = playerArray[7] || {};
+                baseData.allPrices = playerArray[8];
             }
 
             return baseData;
@@ -1394,7 +1400,7 @@
             }
         }
 
-        function calculateTargetPrices() {
+        function calculateSlotBudgets() {
             const slotBudgets = {};
             ['P','D','C','A'].forEach(role => {
                 slotBudgets[role] = {};
@@ -1432,17 +1438,20 @@
                         const purchasedInfo = purchased[key];
                         const othersInfo = others[key];
                         const price = purchasedInfo?.price ?? t.price;
+                        const playerData = findPlayer(t.name, t.role);
+                        const comment = playerData?.notes?.comm ? `<div class="player-comment">${playerData.notes.comm}</div>` : '';
                         const boughtClass = purchasedInfo ? 'bought' : '';
                         const externalClass = othersInfo ? 'bought-elsewhere' : '';
                         html += `
                         <div class="player-card ${boughtClass} ${externalClass}">
                             <div class="player-info">
                                 <div class="player-name">${roleIcons[role] ?? ''} ${t.name}</div>
-                                 <div class="player-team">Ruolo: ${role} • Slot
+                                <div class="player-team">Ruolo: ${role} • Slot
                                     <select class="slot-select" data-key="${key}" data-role="${role}">
                                         ${getRoleSlots(role).map(s => `<option value="${s}" ${t.slot == s ? 'selected' : ''}>${s}</option>`).join('')}
                                     </select>
                                 </div>
+                                ${comment}
                             </div>
                             <div class="price-badge">
                                 <div class="smart-price">${Math.round(price)}<span class="coin-icon">🪙</span></div>
@@ -1479,7 +1488,7 @@
             // Render simple list (if present)
             const list = document.getElementById('target-list');
             if (list) {
-                calculateTargetPrices();
+                calculateSlotBudgets();
                 const grouped = {};
                 Object.values(targets).forEach(t => {
                     if (!grouped[t.slot]) grouped[t.slot] = [];
@@ -1494,10 +1503,12 @@
                     players.forEach(t => {
                         const key = `${t.role}:${t.name}`;
                         const price = purchased[key]?.price ?? t.price;
+                        const playerDataList = findPlayer(t.name, t.role);
+                        const commentList = playerDataList?.notes?.comm ? `<div style="margin-left:10px;color:var(--text-muted);">${playerDataList.notes.comm}</div>` : '';
                             if (t.prices) {
-                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>`;
+                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>${commentList}`;
                             } else {
-                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>`;
+                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>${commentList}`;
                             }
                     });
                 });
@@ -1853,6 +1864,7 @@
             let detailsHtml = `
                 <h2>${roleIcons[role]} ${player.nome}</h2>
                 <p style="color: var(--text-muted); margin-bottom: 20px;">${player.team} • ${player.fascia}</p>
+                ${player.notes?.comm ? `<p style="margin-bottom:20px;">${player.notes.comm}</p>` : ''}
                 
                 <div class="player-details">
                     <div class="detail-section">
@@ -1874,13 +1886,22 @@
                         <div class="price-analysis">
             `;
 
-            // Show all source prices
-            Object.entries(player.allPrices).forEach(([source, price]) => {
-                const cleanSource = source.replace(/_\d{4}/, '').replace('_', ' ').toUpperCase();
+            // Show all source prices (deduplicated by base source)
+            const latestPrices = {};
+            Object.entries(player.allPrices || {}).forEach(([source, price]) => {
+                const base = source.replace(/_\d{4}/, '');
+                const yearMatch = source.match(/_(\d{4})/);
+                const year = yearMatch ? parseInt(yearMatch[1]) : 0;
+                if (!latestPrices[base] || year > latestPrices[base].year) {
+                    latestPrices[base] = { price, year };
+                }
+            });
+            Object.entries(latestPrices).forEach(([base, info]) => {
+                const cleanSource = base.replace('_', ' ').toUpperCase();
                 detailsHtml += `
                     <div class="source-price">
                         <div class="source-name">${cleanSource}</div>
-                        <div class="source-value">${Math.round(price)} crediti</div>
+                        <div class="source-value">${Math.round(info.price)} crediti</div>
                     </div>
                 `;
             });
@@ -1906,20 +1927,28 @@
                             </div>
                         </div>
                     </div>
+                    <div class="detail-section">
+                        <div class="detail-title">⏱️ Last 2 Seasons</div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            ${player.performance?.["2025_26"] ? `<div><strong>2025/26:</strong> G:${player.performance["2025_26"].goals ?? player.performance["2025_26"].g ?? 0} A:${player.performance["2025_26"].assists ?? player.performance["2025_26"].as ?? 0} Min:${player.performance["2025_26"].minutes ?? player.performance["2025_26"].min ?? 0} MV:${player.performance["2025_26"].rating ?? player.performance["2025_26"].mv ?? 'N/A'}</div>` : ''}
+                            ${player.performance?.["2024_25"] ? `<div><strong>2024/25:</strong> G:${player.performance["2024_25"].goals ?? player.performance["2024_25"].g ?? 0} A:${player.performance["2024_25"].assists ?? player.performance["2024_25"].as ?? 0} Min:${player.performance["2024_25"].minutes ?? player.performance["2024_25"].min ?? 0} MV:${player.performance["2024_25"].rating ?? player.performance["2024_25"].mv ?? 'N/A'}</div>` : ''}
+                        </div>
+                    </div>
             `;
 
             // Role-specific advanced stats
             if (role === 'C' || role === 'A') {
+                const perf = player.performance?.["2025_26"] || {};
                 detailsHtml += `
                     <div class="detail-section">
                         <div class="detail-title">⚽ Performance</div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                            <div><strong>Gol:</strong> ${player.performance?.g || 0}</div>
-                            <div><strong>Assist:</strong> ${player.performance?.as || 0}</div>
-                            <div><strong>Presenze:</strong> ${player.performance?.p || 0}</div>
-                            <div><strong>Rigoristi:</strong> ${player.performance?.rs || 0}</div>
-                            <div><strong>Media Voto:</strong> ${player.performance?.mv || 'N/A'}</div>
-                            <div><strong>FMV Exp:</strong> ${player.performance?.fexp || 'N/A'}</div>
+                            <div><strong>Gol:</strong> ${perf.g ?? perf.goals ?? 0}</div>
+                            <div><strong>Assist:</strong> ${perf.as ?? perf.assists ?? 0}</div>
+                            <div><strong>Presenze:</strong> ${perf.p ?? perf.presenze ?? 0}</div>
+                            <div><strong>Rigoristi:</strong> ${perf.rs ?? 0}</div>
+                            <div><strong>Media Voto:</strong> ${perf.mv ?? perf.rating ?? 'N/A'}</div>
+                            <div><strong>FMV Exp:</strong> ${perf.fexp ?? 'N/A'}</div>
                         </div>
                     </div>
                 `;
