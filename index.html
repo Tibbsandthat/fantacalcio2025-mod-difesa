@@ -739,20 +739,6 @@
 
             <div class="sidebar">
                 <div class="sidebar-section">
-                    <div class="sidebar-title">📊 Statistiche Live</div>
-                    <div class="quick-stats">
-                        <div class="quick-stat">
-                            <div class="quick-stat-value" id="filtered-count">465</div>
-                            <div class="quick-stat-label">Risultati</div>
-                        </div>
-                        <div class="quick-stat">
-                            <div class="quick-stat-value" id="avg-price">€24</div>
-                            <div class="quick-stat-label">Prezzo Medio</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
                     <div class="sidebar-title">💰 Budget</div>
                     <button id="open-strategy" class="action-btn" style="width: 100%; margin-top: 10px;">📐 Strategia</button>
                     <div id="strategy-container" style="display: none; margin-top: 10px;">
@@ -1572,28 +1558,6 @@
             }
 
             playersGrid.innerHTML = allPlayersHtml;
-            document.getElementById('filtered-count').textContent = totalFiltered;
-            updateSidebarStats();
-        }
-
-        function updateSidebarStats() {
-            const roles = currentRole === 'all' ? ['P', 'D', 'C', 'A'] : [currentRole];
-            let allPrices = [];
-
-            roles.forEach(role => {
-                const players = PLAYERS_DB[role] || [];
-                const filteredPlayers = filterPlayers(players, role);
-                filteredPlayers.forEach(playerArray => {
-                    const player = decodePlayer(playerArray, role);
-                    allPrices.push(player.prezzi.avg);
-                });
-            });
-
-            if (allPrices.length > 0) {
-                const avgPrice = Math.round(allPrices.reduce((a, b) => a + b, 0) / allPrices.length);
-                document.getElementById('avg-price').textContent = `€${avgPrice}`;
-            }
-
             updateTopOpportunities();
         }
 
