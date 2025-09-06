@@ -415,8 +415,28 @@
 
         .planner-row {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 10px;
+        }
+
+        .planner-row.collapsed {
+            gap: 0;
+        }
+
+        .planner-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .slot-summary {
+            margin-left: auto;
+            font-size: var(--font-sm);
+            color: var(--text-muted);
+        }
+
+        .planner-row.collapsed .slots-planner {
+            display: none;
         }
 
         .planner-role {
@@ -1022,11 +1042,23 @@
             Object.keys(slotPlan).forEach(role => {
                 const row = document.createElement('div');
                 row.className = 'role-section planner-row';
+                row.dataset.role = role;
+
+                const header = document.createElement('div');
+                header.className = 'planner-header';
 
                 const roleDiv = document.createElement('div');
                 roleDiv.className = 'planner-role';
                 roleDiv.textContent = role;
-                row.appendChild(roleDiv);
+                header.appendChild(roleDiv);
+
+                const summary = document.createElement('div');
+                summary.className = 'slot-summary';
+                summary.id = `slot-summary-${role}`;
+                summary.textContent = getSlotSummaryText(role);
+                header.appendChild(summary);
+
+                row.appendChild(header);
 
                 const slotsDiv = document.createElement('div');
                 slotsDiv.className = 'slots-planner flex-wrap surface';
@@ -1060,8 +1092,29 @@
             });
         }
 
+        function getSlotSummaryText(role) {
+            return getRoleSlots(role)
+                .map(slot => `${slotPurchases[role][slot]}/${slotPlan[role][slot]}`)
+                .join(' - ');
+        }
+
+        function updateSlotSummary(role) {
+            const summary = document.getElementById(`slot-summary-${role}`);
+            if (summary) {
+                summary.textContent = getSlotSummaryText(role);
+            }
+        }
+
         function setupSquadPlanner() {
             Object.keys(slotPlan).forEach(role => {
+                const row = document.querySelector(`.planner-row[data-role="${role}"]`);
+                const header = row?.querySelector('.planner-header');
+                header?.addEventListener('click', () => {
+                    const isCollapsed = row.classList.contains('collapsed');
+                    document.querySelectorAll('.planner-row').forEach(r => r.classList.add('collapsed'));
+                    if (isCollapsed) row.classList.remove('collapsed');
+                });
+
                 getRoleSlots(role).forEach(slot => {
                     const input = document.getElementById(`slot-plan-${role}-${slot}`);
                     if (input) {
@@ -1073,6 +1126,10 @@
                     }
                 });
             });
+
+            if (window.matchMedia('(max-width: 600px)').matches) {
+                document.querySelectorAll('.planner-row').forEach(row => row.classList.add('collapsed'));
+            }
         }
 
         // Strategy inputs toggle
@@ -1303,6 +1360,7 @@
                         span.textContent = `${slotPurchases[role][slot]}/${slotPlan[role][slot]}`;
                     }
                 });
+                updateSlotSummary(role);
             });
         }
 
