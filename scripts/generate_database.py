@@ -89,6 +89,7 @@ def main() -> None:
             "performance": {},
             "notes": {"comm": ""},
         }
+        fallback_comm = ""
         for _, row in grp.iterrows():
             year = str(row["season"]).split("_")[0]
             player["allPrices"][f"{row['source']}_{year}"] = int(row["price"])
@@ -101,8 +102,20 @@ def main() -> None:
                     "rating": float(row.get("rating", 0) or 0),
                 },
             )
-            if row["source"] == "sos_fanta" and isinstance(row.get("comm"), str) and row.get("comm"):
-                player["notes"]["comm"] = row["comm"]
+            comm = row.get("comm")
+            if row["source"] == "sos_fanta" and isinstance(comm, str) and comm:
+                player["notes"]["comm"] = comm
+            elif not fallback_comm and isinstance(comm, str) and comm:
+                fallback_comm = comm
+        if not player["notes"]["comm"] and fallback_comm:
+            player["notes"]["comm"] = fallback_comm
+
+        for season in SOURCES.keys():
+            player["performance"].setdefault(
+                season,
+                {"goals": 0, "assists": 0, "minutes": 0, "rating": 0},
+            )
+
         result.setdefault(role, []).append(player)
 
     with Path("players_database.json").open("w", encoding="utf-8") as f:

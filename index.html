@@ -1231,7 +1231,8 @@
                     max: Math.round(playerArray[2][1]),
                     avg: Math.round(playerArray[2][2])
                 },
-                stats: playerArray[3]
+                stats: playerArray[3],
+                notes: { comm: "" }
             };
 
             if (role === 'P' || role === 'D') {
@@ -1239,7 +1240,7 @@
                 if (playerArray.length >= 9) {
                     baseData.performance = playerArray[5];
                     baseData.fascia = playerArray[6];
-                    baseData.notes = playerArray[7] || {};
+                    baseData.notes = playerArray[7] || { comm: "" };
                     baseData.allPrices = playerArray[8];
                 } else {
                     baseData.fascia = playerArray[5];
@@ -1249,7 +1250,7 @@
                 baseData.performance = playerArray[4];
                 baseData.discipline = playerArray[5];
                 baseData.fascia = playerArray[6];
-                baseData.notes = playerArray[7] || {};
+                baseData.notes = playerArray[7] || { comm: "" };
                 baseData.allPrices = playerArray[8];
             }
 
@@ -1874,8 +1875,8 @@
             let detailsHtml = `
                 <h2>${roleIcons[role]} ${player.nome}</h2>
                 <p style="color: var(--text-muted); margin-bottom: 20px;">${player.team} • ${player.fascia}</p>
-                ${player.notes?.comm ? `<p style="margin-bottom:20px;">${player.notes.comm}</p>` : ''}
-                
+                ${player.notes?.comm ? `<div id="player-comm" style="margin-bottom:20px;"></div>` : ''}
+
                 <div class="player-details">
                     <div class="detail-section">
                         <div class="detail-title">💰 Analisi Prezzi Smart</div>
@@ -1937,29 +1938,27 @@
                             </div>
                         </div>
                     </div>
-                    <div class="detail-section">
-                        <div class="detail-title">⏱️ Last 2 Seasons</div>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                            ${player.performance?.["2025_26"] ? `<div><strong>2025/26:</strong> G:${player.performance["2025_26"].goals ?? player.performance["2025_26"].g ?? 0} A:${player.performance["2025_26"].assists ?? player.performance["2025_26"].as ?? 0} Min:${player.performance["2025_26"].minutes ?? player.performance["2025_26"].min ?? 0} MV:${player.performance["2025_26"].rating ?? player.performance["2025_26"].mv ?? 'N/A'}</div>` : ''}
-                            ${player.performance?.["2024_25"] ? `<div><strong>2024/25:</strong> G:${player.performance["2024_25"].goals ?? player.performance["2024_25"].g ?? 0} A:${player.performance["2024_25"].assists ?? player.performance["2024_25"].as ?? 0} Min:${player.performance["2024_25"].minutes ?? player.performance["2024_25"].min ?? 0} MV:${player.performance["2024_25"].rating ?? player.performance["2024_25"].mv ?? 'N/A'}</div>` : ''}
-                        </div>
-                    </div>
             `;
 
-            // Role-specific advanced stats
-            if (role === 'C' || role === 'A') {
-                const perf = player.performance?.["2025_26"] || {};
+            const seasons = Object.keys(player.performance || {}).sort().slice(-2).reverse();
+            if (seasons.length) {
                 detailsHtml += `
                     <div class="detail-section">
                         <div class="detail-title">⚽ Performance</div>
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                            <div><strong>Gol:</strong> ${perf.g ?? perf.goals ?? 0}</div>
-                            <div><strong>Assist:</strong> ${perf.as ?? perf.assists ?? 0}</div>
-                            <div><strong>Presenze:</strong> ${perf.p ?? perf.presenze ?? 0}</div>
-                            <div><strong>Rigoristi:</strong> ${perf.rs ?? 0}</div>
-                            <div><strong>Media Voto:</strong> ${perf.mv ?? perf.rating ?? 'N/A'}</div>
-                            <div><strong>FMV Exp:</strong> ${perf.fexp ?? 'N/A'}</div>
+                        <div id="season-rows">
+                `;
+                seasons.forEach(season => {
+                    const perf = player.performance[season] || {};
+                    const g = perf.goals ?? perf.g ?? 0;
+                    const a = perf.assists ?? perf.as ?? 0;
+                    const m = perf.minutes ?? perf.min ?? 0;
+                    const r = perf.rating ?? perf.mv ?? 'N/A';
+                    const label = season.replace('_','/');
+                    detailsHtml += `<div class="season-row" data-season="${season}" style="cursor:pointer; padding:4px 0;"><strong>${label}:</strong> G:${g} A:${a} Min:${m} MV:${r}</div>`;
+                });
+                detailsHtml += `
                         </div>
+                        <div id="selected-season" style="margin-top:10px;"></div>
                     </div>
                 `;
             }
@@ -1979,6 +1978,27 @@
             `;
 
             detailsContainer.innerHTML = detailsHtml;
+
+            if (player.notes?.comm) {
+                const commEl = document.getElementById('player-comm');
+                if (commEl) commEl.innerHTML = player.notes.comm.replace(/\n/g, '<br>');
+            }
+
+            const seasonRows = detailsContainer.querySelectorAll('.season-row');
+            const selectedSeasonEl = detailsContainer.querySelector('#selected-season');
+            seasonRows.forEach(row => {
+                row.addEventListener('click', () => {
+                    const season = row.dataset.season;
+                    const stats = player.performance[season] || {};
+                    seasonRows.forEach(r => r.classList.remove('active'));
+                    row.classList.add('active');
+                    selectedSeasonEl.innerHTML = Object.entries(stats)
+                        .map(([k, v]) => `<div><strong>${k}:</strong> ${v}</div>`)
+                        .join('');
+                });
+            });
+            if (seasonRows.length) seasonRows[0].click();
+
             modal.style.display = 'flex';
             if (push) history.pushState({ view: 'player', player: playerName, role }, '');
         }
