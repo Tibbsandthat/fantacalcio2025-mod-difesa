@@ -1323,8 +1323,14 @@
 
         function findPlayer(name, role) {
             const players = PLAYERS_DB[role] || [];
-            const playerArray = players.find(p => p[0] === name);
-            return playerArray ? decodePlayer(playerArray, role) : null;
+            const playerRecord = players.find(
+                p => (Array.isArray(p) ? p[0] : p.nome) === name
+            );
+            return playerRecord
+                ? Array.isArray(playerRecord)
+                    ? decodePlayer(playerRecord, role)
+                    : playerRecord
+                : null;
         }
 
         function calculateTargetPrices(player, role) {
@@ -1850,11 +1856,15 @@
 
         function showPlayerDetails(playerName, role, push = true) {
             const players = PLAYERS_DB[role] || [];
-            const playerArray = players.find(p => p[0] === playerName);
-            
-            if (!playerArray) return;
-            
-            const player = decodePlayer(playerArray, role);
+            const playerRecord = players.find(
+                p => (Array.isArray(p) ? p[0] : p.nome) === playerName
+            );
+
+            if (!playerRecord) return;
+
+            const player = Array.isArray(playerRecord)
+                ? decodePlayer(playerRecord, role)
+                : playerRecord;
             const priceHints = calculateTargetPrices(player, role);
             const modal = document.getElementById('player-modal');
             const detailsContainer = document.getElementById('player-details');

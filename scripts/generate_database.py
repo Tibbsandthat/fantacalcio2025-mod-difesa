@@ -87,7 +87,7 @@ def main() -> None:
             "prezzi": {"min": min_p, "max": max_p, "avg": avg},
             "allPrices": {},
             "performance": {},
-            "notes": {},
+            "notes": {"comm": ""},
         }
         for _, row in grp.iterrows():
             year = str(row["season"]).split("_")[0]
