@@ -211,6 +211,16 @@
             cursor: pointer;
         }
 
+        .purchase-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-left: 4px;
+            display: inline-block;
+        }
+
         .player-info {
             flex: 1;
         }
@@ -726,8 +736,27 @@
         const targets = {};
         const purchased = {};
 
+        function loadPurchased() {
+            const saved = JSON.parse(localStorage.getItem('purchased') || '{}');
+            Object.entries(saved).forEach(([key, data]) => {
+                purchased[key] = data;
+                const [role, name] = key.split(':');
+                budget.total.spent += data.price;
+                budget.roles[role].spent += data.price;
+                budget.roles[role].count += 1;
+                targets[key] = { name, role, price: data.price };
+            });
+        }
+
+        function savePurchased() {
+            localStorage.setItem('purchased', JSON.stringify(purchased));
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            loadPurchased();
+            updateBudgetUI();
+            updateTargetsUI();
             const playersGrid = document.getElementById('players-grid');
             fetch('players_database.json')
                 .then(response => {
@@ -931,7 +960,11 @@
         function updateTargetsUI() {
             const list = document.getElementById('target-list');
             if (!list) return;
-            list.innerHTML = Object.values(targets).map(t => `<li class="recommendation">${t.name} (${t.role}) - €${t.price}</li>`).join('');
+            list.innerHTML = Object.values(targets).map(t => {
+                const key = `${t.role}:${t.name}`;
+                const p = purchased[key]?.price;
+                return `<li class="recommendation">${t.name} (${t.role}) - €${p ?? t.price}</li>`;
+            }).join('');
         }
 
         function toggleTarget(name, role, price) {
@@ -944,19 +977,38 @@
             updateTargetsUI();
         }
 
+        function promptBuyPlayer(name, defaultPrice, role) {
+            const input = prompt(`Prezzo pagato per ${name}?`, defaultPrice);
+            const price = parseInt(input, 10);
+            if (input === null || input.trim() === '' || isNaN(price)) return;
+            buyPlayer(name, price, role);
+        }
+
         function buyPlayer(name, price, role) {
             const key = `${role}:${name}`;
             if (purchased[key]) return;
-            purchased[key] = true;
+            purchased[key] = { price };
             budget.total.spent += price;
             budget.roles[role].spent += price;
             budget.roles[role].count += 1;
             updateBudgetUI();
             const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
-            if (el) el.classList.add('bought');
-            delete targets[key];
+            if (el) {
+                el.classList.add('bought');
+                const actions = el.querySelector('.player-actions');
+                let badge = actions.querySelector('.purchase-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'purchase-badge';
+                    actions.appendChild(badge);
+                }
+                badge.textContent = `€${price}`;
+            }
+            targets[key] = targets[key] || { name, role, price };
+            targets[key].price = price;
             updateTargetsUI();
             checkAlerts(role);
+            savePurchased();
         }
 
         function checkAlerts(role) {
@@ -970,6 +1022,8 @@
             const player = decodePlayer(playerArray, role);
             const opportunity = getOpportunityLevel(player);
             const reliabilityStars = getReliabilityStars(player.stats.a);
+            const key = `${role}:${player.nome}`;
+            const purchasedInfo = purchased[key];
             
             const opportunityColors = {
                 'high': '#28a745',
@@ -985,7 +1039,7 @@
             };
 
             return `
-                <div class="player-card" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
+                <div class="player-card${purchasedInfo ? ' bought' : ''}" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
                     <div style="position: relative; flex:1;">
                         ${opportunity === 'high' ? '<div class="opportunity-badge">🔥</div>' : ''}
                         <div class="player-info">
@@ -1024,7 +1078,8 @@
                     </div>
                     <div class="player-actions">
                         <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${player.prezzi.avg})">🎯</button>
-                        <button class="action-btn" onclick="event.stopPropagation(); buyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
+                        ${purchasedInfo ? `<span class="purchase-badge">€${purchasedInfo.price}</span>` : ''}
                     </div>
                 </div>
             `;
