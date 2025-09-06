@@ -428,8 +428,8 @@
         #planner-role-menu {
             display: flex;
             justify-content: center;
-            gap: 4px;
-            margin-bottom: 10px;
+            gap: 2px;
+            margin-bottom: 8px;
         }
 
         #planner-role-menu .nav-btn {
@@ -475,6 +475,20 @@
 
         .slots-planner {
             /* uses flex-wrap and surface utilities */
+        }
+
+        #squad-planner .slots-planner {
+            padding: 4px;
+            gap: 6px;
+        }
+
+        #squad-planner .slot .input-field {
+            width: 32px;
+            height: 32px;
+            padding: 4px;
+            font-size: var(--font-sm);
+            min-width: 0;
+            min-height: 0;
         }
 
         .slot {
@@ -587,9 +601,19 @@
             }
             #planner-role-menu {
                 gap: 2px;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
             }
             #planner-role-menu .nav-btn {
+                width: 28px;
+                height: 28px;
+                padding: 2px;
+                font-size: var(--font-sm);
+            }
+            #squad-planner .slots-planner {
+                padding: 2px;
+                gap: 4px;
+            }
+            #squad-planner .slot .input-field {
                 width: 28px;
                 height: 28px;
                 padding: 2px;
