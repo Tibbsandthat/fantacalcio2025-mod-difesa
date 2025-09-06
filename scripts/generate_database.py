@@ -7,11 +7,7 @@ grouped by role.
 """
 from pathlib import Path
 import json
-
-try:
-    import pandas as pd
-except ImportError:  # pragma: no cover - environment without pandas
-    pd = None
+from openpyxl import load_workbook
 
 SOURCES = {
     "2025_26": {
@@ -29,70 +25,92 @@ SOURCES = {
 }
 
 
-def load_source(path: Path) -> 'pd.DataFrame':
-    df = pd.read_excel(path)
-    df.columns = [c.lower() for c in df.columns]
-    df = df.rename(
-        columns={
-            "nome": "name",
-            "ruolo": "role",
-            "squadra": "team",
-            "prezzo": "price",
-            "gol": "goals",
-            "goal": "goals",
-            "assist": "assists",
-            "ass": "assists",
-            "minuti": "minutes",
-            "min": "minutes",
-            "media": "rating",
-            "mv": "rating",
-            "commento": "comm",
-        }
-    )
-    for col in ["team", "goals", "assists", "minutes", "rating", "comm"]:
-        if col not in df.columns:
-            df[col] = 0 if col not in ("team", "comm") else ""
-    return df[["name", "team", "role", "price", "goals", "assists", "minutes", "rating", "comm"]]
+def load_source(path: Path) -> list[dict]:
+    wb = load_workbook(path, read_only=True)
+    ws = wb.active
+    rows = ws.iter_rows(values_only=True)
+    try:
+        header = [str(c).lower() for c in next(rows)]
+    except StopIteration:  # empty sheet
+        return []
+    mapping = {
+        "nome": "name",
+        "ruolo": "role",
+        "squadra": "team",
+        "prezzo": "price",
+        "gol": "goals",
+        "goal": "goals",
+        "assist": "assists",
+        "ass": "assists",
+        "minuti": "minutes",
+        "min": "minutes",
+        "media": "rating",
+        "mv": "rating",
+        "commento": "comm",
+    }
+    cols = [mapping.get(c, c) for c in header]
+    result: list[dict] = []
+    for row in rows:
+        if all(cell is None for cell in row):
+            continue
+        data = {cols[i]: row[i] for i in range(len(cols))}
+        for col in ["team", "goals", "assists", "minutes", "rating", "comm"]:
+            if col not in data or data[col] is None:
+                data[col] = "" if col in ("team", "comm") else 0
+        result.append(
+            {
+                "name": data.get("name", ""),
+                "team": data.get("team", ""),
+                "role": data.get("role", ""),
+                "price": data.get("price", 0),
+                "goals": data.get("goals", 0),
+                "assists": data.get("assists", 0),
+                "minutes": data.get("minutes", 0),
+                "rating": data.get("rating", 0),
+                "comm": data.get("comm", ""),
+            }
+        )
+    return result
 
 
 def main() -> None:
-    if pd is None:
-        raise SystemExit("pandas is required to run this script")
-
-    frames = []
+    frames: list[dict] = []
     for season, sources in SOURCES.items():
         for source, filename in sources.items():
             path = Path(filename)
             if not path.exists():
                 continue
-            df = load_source(path)
-            df["source"] = source
-            df["season"] = season
-            frames.append(df)
+            for row in load_source(path):
+                row["source"] = source
+                row["season"] = season
+                frames.append(row)
 
     if not frames:
         raise SystemExit("no source data found")
 
-    data = pd.concat(frames)
+    data_by_player: dict[tuple[str, str], list[dict]] = {}
+    for row in frames:
+        key = (row["name"], row["role"])
+        data_by_player.setdefault(key, []).append(row)
 
-    result = {}
-    for (name, role), grp in data.groupby(["name", "role"]):
-        prices = grp["price"].astype(float)
-        avg = round(prices.mean(), 1)
-        min_p = int(prices.min())
-        max_p = int(prices.max())
+    result: dict[str, list[dict]] = {}
+    for (name, role), grp in data_by_player.items():
+        prices = [float(r.get("price", 0) or 0) for r in grp]
+        avg = round(sum(prices) / len(prices), 1)
+        min_p = int(min(prices))
+        max_p = int(max(prices))
         player = {
             "nome": name,
-            "team": grp.iloc[0].get("team", ""),
+            "team": grp[0].get("team", ""),
             "prezzi": {"min": min_p, "max": max_p, "avg": avg},
             "allPrices": {},
             "performance": {},
             "notes": {"comm": ""},
         }
         fallback_comm = ""
-        for _, row in grp.iterrows():
+        for row in grp:
             year = str(row["season"]).split("_")[0]
-            player["allPrices"][f"{row['source']}_{year}"] = int(row["price"])
+            player["allPrices"][f"{row['source']}_{year}"] = int(row.get("price", 0) or 0)
             player["performance"].setdefault(
                 row["season"],
                 {
