@@ -755,18 +755,31 @@
             }
         };
         const targets = JSON.parse(localStorage.getItem('targets') || '{}');
-        const purchased = JSON.parse(localStorage.getItem('purchased') || '{}');
+        const purchased = {};
 
-        Object.values(purchased).forEach(p => {
-            budget.total.spent += p.price;
-            if (budget.roles[p.role]) {
-                budget.roles[p.role].spent += p.price;
-                budget.roles[p.role].count += 1;
-            }
-        });
+        function loadPurchased() {
+            const saved = JSON.parse(localStorage.getItem('purchased') || '{}');
+            Object.entries(saved).forEach(([key, data]) => {
+                purchased[key] = data;
+                const [role, name] = key.split(':');
+                budget.total.spent += data.price;
+                if (budget.roles[role]) {
+                    budget.roles[role].spent += data.price;
+                    budget.roles[role].count += 1;
+                }
+                targets[key] = targets[key] || { name, role, price: data.price };
+            });
+        }
+
+        function savePurchased() {
+            localStorage.setItem('purchased', JSON.stringify(purchased));
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            loadPurchased();
+            updateBudgetUI();
+            updateTargetsUI();
             const playersGrid = document.getElementById('players-grid');
             fetch('players_database.json')
                 .then(response => {
@@ -996,7 +1009,9 @@
             const cards = Object.entries(targets).map(([key, t]) => {
                 slotCounts[t.role]++;
                 const slot = slotCounts[t.role];
-                const boughtClass = purchased[key] ? 'bought' : '';
+                const purchasedInfo = purchased[key];
+                const price = purchasedInfo?.price ?? t.price;
+                const boughtClass = purchasedInfo ? 'bought' : '';
                 return `
                     <div class="player-card ${boughtClass}">
                         <div class="player-info">
@@ -1004,12 +1019,13 @@
                             <div class="player-team">Ruolo: ${t.role} • Slot ${slot}</div>
                         </div>
                         <div class="player-price">
-                            <div class="smart-price">€${t.price}</div>
+                            <div class="smart-price">€${price}</div>
                         </div>
                         <div class="player-actions">
                             <button class="action-btn" onclick="toggleTarget('${t.name}', '${t.role}', ${t.price})">❌</button>
                             <button class="action-btn" onclick="editTarget('${key}')">✏️</button>
-                            <button class="action-btn" onclick="buyPlayer('${t.name}', ${t.price}, '${t.role}')">💸</button>
+                            <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${price}, '${t.role}')">💸</button>
+                            ${purchasedInfo ? `<span class="purchase-badge">€${purchasedInfo.price}</span>` : ''}
                         </div>
                     </div>`;
             }).join('');
@@ -1026,6 +1042,13 @@
             updateTargetsUI();
         }
 
+        function promptBuyPlayer(name, defaultPrice, role) {
+            const input = prompt(`Prezzo pagato per ${name}?`, defaultPrice);
+            const price = parseInt(input, 10);
+            if (input === null || input.trim() === '' || isNaN(price)) return;
+            buyPlayer(name, price, role);
+        }
+
         function editTarget(key) {
             const target = targets[key];
             if (!target) return;
@@ -1040,15 +1063,27 @@
             const key = `${role}:${name}`;
             if (purchased[key]) return;
             purchased[key] = { name, role, price };
-            localStorage.setItem('purchased', JSON.stringify(purchased));
             budget.total.spent += price;
             budget.roles[role].spent += price;
             budget.roles[role].count += 1;
             updateBudgetUI();
             const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
-            if (el) el.classList.add('bought');
+            if (el) {
+                el.classList.add('bought');
+                const actions = el.querySelector('.player-actions');
+                let badge = actions.querySelector('.purchase-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'purchase-badge';
+                    actions.appendChild(badge);
+                }
+                badge.textContent = `€${price}`;
+            }
+            targets[key] = targets[key] || { name, role, price };
+            targets[key].price = price;
             updateTargetsUI();
             checkAlerts(role);
+            savePurchased();
         }
 
         function checkAlerts(role) {
@@ -1077,7 +1112,8 @@
             };
 
             const key = `${role}:${player.nome}`;
-            const boughtClass = purchased[key] ? 'bought' : '';
+            const purchasedInfo = purchased[key];
+            const boughtClass = purchasedInfo ? 'bought' : '';
 
             return `
                 <div class="player-card ${boughtClass}" id="player-${role}-${player.nome.replace(/\s+/g,'-')}" onclick="showPlayerDetails('${playerArray[0]}', '${role}')">
@@ -1119,7 +1155,8 @@
                     </div>
                     <div class="player-actions">
                         <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${player.prezzi.avg})">🎯</button>
-                        <button class="action-btn" onclick="event.stopPropagation(); buyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${player.prezzi.avg}, '${role}')">💸</button>
+                        ${purchasedInfo ? `<span class="purchase-badge">€${purchasedInfo.price}</span>` : ''}
                     </div>
                 </div>
             `;
