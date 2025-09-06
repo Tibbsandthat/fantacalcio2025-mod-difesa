@@ -1,0 +1,16 @@
+{
+  "name": "fantacalcio2025-mod-difesa",
+  "version": "1.0.0",
+  "description": "Utility scripts and web interface for planning fantasy football squads.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "jsdom": "^26.1.0"
+  }
+}
