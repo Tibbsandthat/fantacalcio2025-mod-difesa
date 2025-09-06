@@ -1610,37 +1610,48 @@
         }
 
         function updateTopOpportunities() {
+            const MIN_RELIABILITY = 4;
             const opportunities = [];
-            
+
             Object.entries(PLAYERS_DB).forEach(([role, players]) => {
                 players.forEach(playerArray => {
                     const player = decodePlayer(playerArray, role);
                     const opportunity = getOpportunityLevel(player);
                     const variance = ((player.prezzi.max - player.prezzi.min) / player.prezzi.avg) * 100;
-                    
-                    if (opportunity === 'high' && player.stats.a >= 4) {
+                    const reliability = player.stats.a || 0;
+                    const recentForm = player.stats.f || 0;
+                    const targetPrice = Math.round(player.prezzi.min * 1.1);
+                    const savings = Math.round(player.prezzi.avg - targetPrice);
+
+                    if (opportunity === 'high' && reliability >= MIN_RELIABILITY) {
                         opportunities.push({
                             ...player,
                             role,
                             variance,
-                            targetPrice: Math.round(player.prezzi.min * 1.1)
+                            targetPrice,
+                            reliability,
+                            recentForm,
+                            savings
                         });
                     }
                 });
             });
 
-            opportunities.sort((a, b) => b.variance - a.variance);
-            
+            opportunities.sort((a, b) => b.savings - a.savings);
+
             const topOpportunitiesList = document.getElementById('top-opportunities');
             const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
-            
-            topOpportunitiesList.innerHTML = opportunities.slice(0, 5).map(opp => `
+
+            topOpportunitiesList.innerHTML = opportunities
+                .filter(opp => opp.reliability >= MIN_RELIABILITY)
+                .slice(0, 5)
+                .map(opp => `
                 <li class="recommendation" onclick="showPlayerDetails('${opp.nome}', '${opp.role}')">
                     <div class="recommendation-text">
                         ${roleIcons[opp.role]} ${opp.nome} (${opp.team})
                     </div>
                     <div class="recommendation-price">
-                        Target: €${opp.targetPrice} (Risparmio: €${Math.round(opp.prezzi.avg - opp.targetPrice)})
+                        Target: €${opp.targetPrice} (Risparmio: €${opp.savings}) • Affidabilità: ${opp.reliability}/5 • Forma: ${opp.recentForm.toFixed(2)}
                     </div>
                 </li>
             `).join('') || '<li class="recommendation"><div class="recommendation-text">Nessuna opportunità con i filtri attuali</div></li>';
