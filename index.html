@@ -135,7 +135,7 @@
 
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 350px;
+            grid-template-columns: 1fr;
             gap: 30px;
             padding: clamp(10px, 4vw, 30px);
         }
@@ -647,24 +647,6 @@
             color: var(--text-muted);
         }
 
-        .ai-insights {
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-            color: #fff;
-            padding: 20px;
-            border-radius: var(--radius);
-            margin-bottom: 20px;
-        }
-
-        .insight-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .insight-text {
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
 
         .modal {
             display: none;
@@ -785,6 +767,7 @@
         <div class="nav-tabs">
             <button id="nav-home" class="nav-btn active">Lista</button>
             <button id="nav-targets" class="nav-btn">Targets</button>
+            <button id="nav-budget" class="nav-btn">Budget</button>
         </div>
         <div id="main-view">
         <div class="search-container">
@@ -852,52 +835,36 @@
                 </div>
             </div>
 
-            <div class="sidebar">
-                <div class="sidebar-section">
-                    <div class="sidebar-title">💰 Budget</div>
-                    <button id="open-strategy" class="action-btn" style="width: 100%; margin-top: 10px;">📐 Strategia</button>
-                    <div id="strategy-container" style="display: none; margin-top: 10px;">
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
-                            <label>P: <input type="number" id="strategy-P" min="0" max="100" style="width:60px;"></label>
-                            <label>D: <input type="number" id="strategy-D" min="0" max="100" style="width:60px;"></label>
-                            <label>C: <input type="number" id="strategy-C" min="0" max="100" style="width:60px;"></label>
-                            <label>A: <input type="number" id="strategy-A" min="0" max="100" style="width:60px;"></label>
-                        </div>
-                        <button id="save-strategy" class="action-btn" style="width:100%;">Salva</button>
-                    </div>
-                    <ul class="recommendations">
-                        <li>Totale: <span id="budget-total">0</span>/<span id="budget-total-max">500</span></li>
-                        <li>P: <span id="budget-P">0</span>/<span id="budget-P-max">50</span> (<span id="count-P">0</span>/<span id="needed-P">3</span>)</li>
-                        <li>D: <span id="budget-D">0</span>/<span id="budget-D-max">160</span> (<span id="count-D">0</span>/<span id="needed-D">8</span>)</li>
-                        <li>C: <span id="budget-C">0</span>/<span id="budget-C-max">150</span> (<span id="count-C">0</span>/<span id="needed-C">8</span>)</li>
-                        <li>A: <span id="budget-A">0</span>/<span id="budget-A-max">140</span> (<span id="count-A">0</span>/<span id="needed-A">6</span>)</li>
-                    </ul>
-                </div>
-
-                <details class="sidebar-card">
-                    <summary class="sidebar-card-title">🤖 AI Insights</summary>
-                    <div class="insight-text" id="ai-insight">
-                        Analizzando le tendenze di mercato e le performance storiche...
-                    </div>
-                </details>
-
-                <details class="sidebar-card" open>
-                    <summary class="sidebar-card-title">💎 Opportunità Top</summary>
-                    <ul class="recommendations" id="top-opportunities">
-                        <li class="recommendation">
-                            <div class="recommendation-text">Caricamento opportunità...</div>
-                        </li>
-                    </ul>
-                </details>
-            </div>
         </div>
         </div>
 
         <div id="targets-view">
             <button id="targets-back" class="nav-btn" style="margin-bottom:10px;">⬅️ Back</button>
             <h2 style="text-align:center; margin:20px 0;">Squad Planner</h2>
-            <div class="planner-container" id="squad-planner"></div>
-            <div class="players-grid" id="targets-grid"></div>
+        <div class="planner-container" id="squad-planner"></div>
+        <div class="players-grid" id="targets-grid"></div>
+        </div>
+        <div id="budget-view" style="display:none;">
+            <div class="sidebar-section">
+                <div class="sidebar-title">💰 Budget</div>
+                <button id="open-strategy" class="action-btn" style="width: 100%; margin-top: 10px;">📐 Strategia</button>
+                <div id="strategy-container" style="display: none; margin-top: 10px;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                        <label>P: <input type="number" id="strategy-P" min="0" max="100" style="width:60px;"></label>
+                        <label>D: <input type="number" id="strategy-D" min="0" max="100" style="width:60px;"></label>
+                        <label>C: <input type="number" id="strategy-C" min="0" max="100" style="width:60px;"></label>
+                        <label>A: <input type="number" id="strategy-A" min="0" max="100" style="width:60px;"></label>
+                    </div>
+                    <button id="save-strategy" class="action-btn" style="width:100%;">Salva</button>
+                </div>
+                <ul class="recommendations">
+                    <li>Totale: <span id="budget-total">0</span>/<span id="budget-total-max">500</span></li>
+                    <li>P: <span id="budget-P">0</span>/<span id="budget-P-max">50</span> (<span id="count-P">0</span>/<span id="needed-P">3</span>)</li>
+                    <li>D: <span id="budget-D">0</span>/<span id="budget-D-max">160</span> (<span id="count-D">0</span>/<span id="needed-D">8</span>)</li>
+                    <li>C: <span id="budget-C">0</span>/<span id="budget-C-max">150</span> (<span id="count-C">0</span>/<span id="needed-C">8</span>)</li>
+                    <li>A: <span id="budget-A">0</span>/<span id="budget-A-max">140</span> (<span id="count-A">0</span>/<span id="needed-A">6</span>)</li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -938,6 +905,7 @@
         const targets = JSON.parse(localStorage.getItem('targets') || '{}');
         const purchased = {};
         const others = {};
+        const budgetView = document.getElementById('budget-view');
         const slotConfig = { 'P': 4, 'D': 4, 'C': 4, 'A': 4 };
         const slotPlan = {};
         const slotPurchases = {};
@@ -1012,7 +980,6 @@
                     initializeApp();
                     setupEventListeners();
                     renderPlayers();
-                    generateAIInsights();
                 })
                 .catch(error => {
                     console.error('Error loading player database:', error);
@@ -1037,7 +1004,7 @@
 
             for (const role of ['P','D','C','A']) {
                 strategy[role] = Math.round((budget.roles[role].max / budget.total.max) * 100);
-                const input = document.getElementById(`strategy-${role}`);
+                const input = budgetView.querySelector(`#strategy-${role}`);
                 if (!input) return;
                 input.value = strategy[role];
             }
@@ -1177,19 +1144,20 @@
         }
 
         // Strategy inputs toggle
-        const strategyContainer = document.getElementById('strategy-container');
-        document.getElementById('open-strategy').addEventListener('click', () => {
+        const strategyContainer = budgetView.querySelector('#strategy-container');
+        budgetView.querySelector('#open-strategy').addEventListener('click', () => {
             if (strategyContainer.style.display === 'none' || strategyContainer.style.display === '') {
                 strategyContainer.style.display = 'block';
             } else {
                 strategyContainer.style.display = 'none';
             }
         });
-        document.getElementById('save-strategy').addEventListener('click', saveStrategy);
+        budgetView.querySelector('#save-strategy').addEventListener('click', saveStrategy);
 
         // Navigation
         document.getElementById('nav-home').addEventListener('click', showMainView);
         document.getElementById('nav-targets').addEventListener('click', showTargetsView);
+        document.getElementById('nav-budget').addEventListener('click', showBudgetView);
 
         function handleSearch(e) {
             searchTerm = e.target.value.toLowerCase();
@@ -1215,8 +1183,10 @@
         function showMainView(push = true) {
             document.getElementById('main-view').style.display = 'block';
             document.getElementById('targets-view').style.display = 'none';
+            budgetView.style.display = 'none';
             document.getElementById('nav-home').classList.add('active');
             document.getElementById('nav-targets').classList.remove('active');
+            document.getElementById('nav-budget').classList.remove('active');
             renderPlayers();
             if (push) history.pushState({ view: 'main' }, '');
         }
@@ -1224,10 +1194,23 @@
         function showTargetsView(push = true) {
             document.getElementById('main-view').style.display = 'none';
             document.getElementById('targets-view').style.display = 'block';
+            budgetView.style.display = 'none';
             document.getElementById('nav-home').classList.remove('active');
             document.getElementById('nav-targets').classList.add('active');
+            document.getElementById('nav-budget').classList.remove('active');
             updateTargetsUI();
             if (push) history.pushState({ view: 'targets' }, '');
+        }
+
+        function showBudgetView(push = true) {
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('targets-view').style.display = 'none';
+            budgetView.style.display = 'block';
+            document.getElementById('nav-home').classList.remove('active');
+            document.getElementById('nav-targets').classList.remove('active');
+            document.getElementById('nav-budget').classList.add('active');
+            updateBudgetUI();
+            if (push) history.pushState({ view: 'budget' }, '');
         }
 
         function updatePriceRange() {
@@ -1396,7 +1379,7 @@
             const total = budget.total.max;
             let newTotal = 0;
             ['P','D','C','A'].forEach(role => {
-                const val = parseInt(document.getElementById(`strategy-${role}`).value) || 0;
+                const val = parseInt(budgetView.querySelector(`#strategy-${role}`).value) || 0;
                 strategy[role] = val;
                 const roleMax = Math.round(total * val / 100);
                 budget.roles[role].max = roleMax;
@@ -1409,13 +1392,13 @@
         }
 
         function updateBudgetUI() {
-            document.getElementById('budget-total').textContent = budget.total.spent;
-            document.getElementById('budget-total-max').textContent = budget.total.max;
+            budgetView.querySelector('#budget-total').textContent = budget.total.spent;
+            budgetView.querySelector('#budget-total-max').textContent = budget.total.max;
             ['P','D','C','A'].forEach(role => {
-                document.getElementById(`budget-${role}`).textContent = budget.roles[role].spent;
-                document.getElementById(`budget-${role}-max`).textContent = budget.roles[role].max;
-                document.getElementById(`count-${role}`).textContent = budget.roles[role].count;
-                document.getElementById(`needed-${role}`).textContent = budget.roles[role].needed;
+                budgetView.querySelector(`#budget-${role}`).textContent = budget.roles[role].spent;
+                budgetView.querySelector(`#budget-${role}-max`).textContent = budget.roles[role].max;
+                budgetView.querySelector(`#count-${role}`).textContent = budget.roles[role].count;
+                budgetView.querySelector(`#needed-${role}`).textContent = budget.roles[role].needed;
                 getRoleSlots(role).forEach(slot => {
                     const span = document.getElementById(`slot-count-${role}-${slot}`);
                     if (span) {
@@ -1815,85 +1798,6 @@
                     showPlayerDetails(card.dataset.name, card.dataset.role);
                 });
             });
-            updateTopOpportunities();
-        }
-
-        function updateTopOpportunities() {
-            const MIN_RELIABILITY = 4;
-            const opportunities = [];
-
-            Object.entries(PLAYERS_DB).forEach(([role, players]) => {
-                players.forEach(playerArray => {
-                    const player = decodePlayer(playerArray, role);
-                    const opportunity = getOpportunityLevel(player);
-                    const variance = ((player.prezzi.max - player.prezzi.min) / player.prezzi.avg) * 100;
-                    const reliability = player.stats.a || 0;
-                    const recentForm = player.stats.f || 0;
-                    const targetPrice = Math.round(player.prezzi.min * 1.1);
-                    const savings = Math.round(player.prezzi.avg - targetPrice);
-
-                    if (opportunity === 'high' && reliability >= MIN_RELIABILITY) {
-                        opportunities.push({
-                            ...player,
-                            role,
-                            variance,
-                            targetPrice,
-                            reliability,
-                            recentForm,
-                            savings
-                        });
-                    }
-                });
-            });
-
-            opportunities.sort((a, b) => b.savings - a.savings);
-
-            const topOpportunitiesList = document.getElementById('top-opportunities');
-            const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
-
-            topOpportunitiesList.innerHTML = opportunities
-                .filter(opp => opp.reliability >= MIN_RELIABILITY)
-                .slice(0, 5)
-                .map(opp => `
-                <li class="recommendation" data-name="${opp.nome}" data-role="${opp.role}">
-                    <div class="recommendation-text">
-                        ${roleIcons[opp.role]} ${opp.nome} (${opp.team})
-                    </div>
-                    <div class="recommendation-price">
-                        Target: ${Math.round(opp.targetPrice)} crediti (Risparmio: ${Math.round(opp.savings)} crediti) • Affidabilità: ${opp.reliability}/5 • Forma: ${opp.recentForm.toFixed(2)}
-                    </div>
-                </li>
-            `).join('') || '<li class="recommendation"><div class="recommendation-text">Nessuna opportunità con i filtri attuali</div></li>';
-            topOpportunitiesList.querySelectorAll('.recommendation[data-name]').forEach(item => {
-                item.addEventListener('click', () => {
-                    showPlayerDetails(item.dataset.name, item.dataset.role);
-                });
-            });
-        }
-
-        function generateAIInsights() {
-            if (!PLAYERS_DB || Object.keys(PLAYERS_DB).length === 0) {
-                document.getElementById('ai-insight').textContent = 'Analisi in corso...';
-                setTimeout(generateAIInsights, 10000);
-                return;
-            }
-
-            const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
-            const allPlayers = Object.entries(PLAYERS_DB).flatMap(([role, arr]) =>
-                arr.map(pArr => ({ ...decodePlayer(pArr, role), role }))
-            );
-
-            const highReliability = allPlayers
-                .filter(p => (p.stats?.a || 0) >= 4)
-                .sort((a, b) => a.prezzi.avg - b.prezzi.avg);
-
-            const topPlayers = highReliability.slice(0, 3);
-            const insightText = topPlayers.length
-                ? `Giocatori affidabili a basso costo: ${topPlayers.map(p => `${roleIcons[p.role]} ${p.nome} ${Math.round(p.prezzi.avg)} crediti`).join(', ')}`
-                : 'Nessun giocatore affidabile trovato.';
-
-            document.getElementById('ai-insight').innerHTML = insightText;
-            setTimeout(generateAIInsights, 10000);
         }
 
 
@@ -2047,6 +1951,8 @@
             }
             if (event.state && event.state.view === 'targets') {
                 showTargetsView(false);
+            } else if (event.state && event.state.view === 'budget') {
+                showBudgetView(false);
             } else {
                 showMainView(false);
             }
