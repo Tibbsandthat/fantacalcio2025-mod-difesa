@@ -407,19 +407,50 @@
             margin-top: 3px;
         }
 
-        .slots-planner {
-            width: 100%;
-            border-collapse: collapse;
+        .planner-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .slots-planner th, .slots-planner td {
-            padding: 4px;
+        .planner-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .planner-role {
+            font-weight: 600;
+            width: 30px;
             text-align: center;
-            font-size: 0.8rem;
+        }
+
+        .planner-slots {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .slot-label {
+            font-size: var(--font-sm);
+            color: var(--text-muted);
         }
 
         .slot-input {
-            width: 40px;
+            width: 50px;
+            padding: 6px;
+            border: 2px solid var(--color-primary);
+            border-radius: var(--radius);
+            background: transparent;
+            color: var(--text-color);
         }
 
         .slot-input,
@@ -429,6 +460,22 @@
         #strategy-A {
             -webkit-appearance: none;
             margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            .planner-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .planner-role {
+                width: auto;
+                margin-bottom: 8px;
+            }
+
+            .planner-slots {
+                width: 100%;
+            }
         }
 
         .loading {
@@ -772,39 +819,111 @@
 
         <div id="targets-view">
             <h2 style="text-align:center; margin:20px 0;">Squad Planner</h2>
-            <table class="slots-planner" id="squad-planner">
-                <tr>
-                    <th>R</th><th>1</th><th>2</th><th>3</th><th>4</th>
-                </tr>
-                <tr>
-                    <td>P</td>
-                    <td><input type="number" class="slot-input" id="slot-plan-P-1" min="0" value="0"> <small id="slot-count-P-1">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-P-2" min="0" value="0"> <small id="slot-count-P-2">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-P-3" min="0" value="0"> <small id="slot-count-P-3">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-P-4" min="0" value="0"> <small id="slot-count-P-4">0/0</small></td>
-                </tr>
-                <tr>
-                    <td>D</td>
-                    <td><input type="number" class="slot-input" id="slot-plan-D-1" min="0" value="0"> <small id="slot-count-D-1">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-D-2" min="0" value="0"> <small id="slot-count-D-2">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-D-3" min="0" value="0"> <small id="slot-count-D-3">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-D-4" min="0" value="0"> <small id="slot-count-D-4">0/0</small></td>
-                </tr>
-                <tr>
-                    <td>C</td>
-                    <td><input type="number" class="slot-input" id="slot-plan-C-1" min="0" value="0"> <small id="slot-count-C-1">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-C-2" min="0" value="0"> <small id="slot-count-C-2">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-C-3" min="0" value="0"> <small id="slot-count-C-3">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-C-4" min="0" value="0"> <small id="slot-count-C-4">0/0</small></td>
-                </tr>
-                <tr>
-                    <td>A</td>
-                    <td><input type="number" class="slot-input" id="slot-plan-A-1" min="0" value="0"> <small id="slot-count-A-1">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-A-2" min="0" value="0"> <small id="slot-count-A-2">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-A-3" min="0" value="0"> <small id="slot-count-A-3">0/0</small></td>
-                    <td><input type="number" class="slot-input" id="slot-plan-A-4" min="0" value="0"> <small id="slot-count-A-4">0/0</small></td>
-                </tr>
-            </table>
+            <div class="planner-container" id="squad-planner">
+                <div class="role-section planner-row">
+                    <div class="planner-role">P</div>
+                    <div class="planner-slots">
+                        <div class="slot">
+                            <span class="slot-label">1</span>
+                            <input type="number" class="slot-input" id="slot-plan-P-1" min="0" value="0">
+                            <small id="slot-count-P-1">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">2</span>
+                            <input type="number" class="slot-input" id="slot-plan-P-2" min="0" value="0">
+                            <small id="slot-count-P-2">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">3</span>
+                            <input type="number" class="slot-input" id="slot-plan-P-3" min="0" value="0">
+                            <small id="slot-count-P-3">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">4</span>
+                            <input type="number" class="slot-input" id="slot-plan-P-4" min="0" value="0">
+                            <small id="slot-count-P-4">0/0</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="role-section planner-row">
+                    <div class="planner-role">D</div>
+                    <div class="planner-slots">
+                        <div class="slot">
+                            <span class="slot-label">1</span>
+                            <input type="number" class="slot-input" id="slot-plan-D-1" min="0" value="0">
+                            <small id="slot-count-D-1">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">2</span>
+                            <input type="number" class="slot-input" id="slot-plan-D-2" min="0" value="0">
+                            <small id="slot-count-D-2">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">3</span>
+                            <input type="number" class="slot-input" id="slot-plan-D-3" min="0" value="0">
+                            <small id="slot-count-D-3">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">4</span>
+                            <input type="number" class="slot-input" id="slot-plan-D-4" min="0" value="0">
+                            <small id="slot-count-D-4">0/0</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="role-section planner-row">
+                    <div class="planner-role">C</div>
+                    <div class="planner-slots">
+                        <div class="slot">
+                            <span class="slot-label">1</span>
+                            <input type="number" class="slot-input" id="slot-plan-C-1" min="0" value="0">
+                            <small id="slot-count-C-1">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">2</span>
+                            <input type="number" class="slot-input" id="slot-plan-C-2" min="0" value="0">
+                            <small id="slot-count-C-2">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">3</span>
+                            <input type="number" class="slot-input" id="slot-plan-C-3" min="0" value="0">
+                            <small id="slot-count-C-3">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">4</span>
+                            <input type="number" class="slot-input" id="slot-plan-C-4" min="0" value="0">
+                            <small id="slot-count-C-4">0/0</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="role-section planner-row">
+                    <div class="planner-role">A</div>
+                    <div class="planner-slots">
+                        <div class="slot">
+                            <span class="slot-label">1</span>
+                            <input type="number" class="slot-input" id="slot-plan-A-1" min="0" value="0">
+                            <small id="slot-count-A-1">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">2</span>
+                            <input type="number" class="slot-input" id="slot-plan-A-2" min="0" value="0">
+                            <small id="slot-count-A-2">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">3</span>
+                            <input type="number" class="slot-input" id="slot-plan-A-3" min="0" value="0">
+                            <small id="slot-count-A-3">0/0</small>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-label">4</span>
+                            <input type="number" class="slot-input" id="slot-plan-A-4" min="0" value="0">
+                            <small id="slot-count-A-4">0/0</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="players-grid" id="targets-grid"></div>
         </div>
     </div>
