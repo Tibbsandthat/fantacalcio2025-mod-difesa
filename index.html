@@ -819,111 +819,7 @@
 
         <div id="targets-view">
             <h2 style="text-align:center; margin:20px 0;">Squad Planner</h2>
-            <div class="planner-container" id="squad-planner">
-                <div class="role-section planner-row">
-                    <div class="planner-role">P</div>
-                    <div class="planner-slots">
-                        <div class="slot">
-                            <span class="slot-label">1</span>
-                            <input type="number" class="slot-input" id="slot-plan-P-1" min="0" value="0">
-                            <small id="slot-count-P-1">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">2</span>
-                            <input type="number" class="slot-input" id="slot-plan-P-2" min="0" value="0">
-                            <small id="slot-count-P-2">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">3</span>
-                            <input type="number" class="slot-input" id="slot-plan-P-3" min="0" value="0">
-                            <small id="slot-count-P-3">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">4</span>
-                            <input type="number" class="slot-input" id="slot-plan-P-4" min="0" value="0">
-                            <small id="slot-count-P-4">0/0</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="role-section planner-row">
-                    <div class="planner-role">D</div>
-                    <div class="planner-slots">
-                        <div class="slot">
-                            <span class="slot-label">1</span>
-                            <input type="number" class="slot-input" id="slot-plan-D-1" min="0" value="0">
-                            <small id="slot-count-D-1">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">2</span>
-                            <input type="number" class="slot-input" id="slot-plan-D-2" min="0" value="0">
-                            <small id="slot-count-D-2">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">3</span>
-                            <input type="number" class="slot-input" id="slot-plan-D-3" min="0" value="0">
-                            <small id="slot-count-D-3">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">4</span>
-                            <input type="number" class="slot-input" id="slot-plan-D-4" min="0" value="0">
-                            <small id="slot-count-D-4">0/0</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="role-section planner-row">
-                    <div class="planner-role">C</div>
-                    <div class="planner-slots">
-                        <div class="slot">
-                            <span class="slot-label">1</span>
-                            <input type="number" class="slot-input" id="slot-plan-C-1" min="0" value="0">
-                            <small id="slot-count-C-1">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">2</span>
-                            <input type="number" class="slot-input" id="slot-plan-C-2" min="0" value="0">
-                            <small id="slot-count-C-2">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">3</span>
-                            <input type="number" class="slot-input" id="slot-plan-C-3" min="0" value="0">
-                            <small id="slot-count-C-3">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">4</span>
-                            <input type="number" class="slot-input" id="slot-plan-C-4" min="0" value="0">
-                            <small id="slot-count-C-4">0/0</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="role-section planner-row">
-                    <div class="planner-role">A</div>
-                    <div class="planner-slots">
-                        <div class="slot">
-                            <span class="slot-label">1</span>
-                            <input type="number" class="slot-input" id="slot-plan-A-1" min="0" value="0">
-                            <small id="slot-count-A-1">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">2</span>
-                            <input type="number" class="slot-input" id="slot-plan-A-2" min="0" value="0">
-                            <small id="slot-count-A-2">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">3</span>
-                            <input type="number" class="slot-input" id="slot-plan-A-3" min="0" value="0">
-                            <small id="slot-count-A-3">0/0</small>
-                        </div>
-                        <div class="slot">
-                            <span class="slot-label">4</span>
-                            <input type="number" class="slot-input" id="slot-plan-A-4" min="0" value="0">
-                            <small id="slot-count-A-4">0/0</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="planner-container" id="squad-planner"></div>
             <div class="players-grid" id="targets-grid"></div>
         </div>
     </div>
@@ -964,25 +860,35 @@
         const targets = JSON.parse(localStorage.getItem('targets') || '{}');
         const purchased = {};
         const others = {};
-        const slotTypes = ['1', '2', '3', '4'];
-        const slotPlan = {
-            'P': { '1': 0, '2': 0, '3': 0, '4': 0 },
-            'D': { '1': 0, '2': 0, '3': 0, '4': 0 },
-            'C': { '1': 0, '2': 0, '3': 0, '4': 0 },
-            'A': { '1': 0, '2': 0, '3': 0, '4': 0 }
-        };
-        const slotPurchases = {
-            'P': { '1': 0, '2': 0, '3': 0, '4': 0 },
-            'D': { '1': 0, '2': 0, '3': 0, '4': 0 },
-            'C': { '1': 0, '2': 0, '3': 0, '4': 0 },
-            'A': { '1': 0, '2': 0, '3': 0, '4': 0 }
-        };
+        const slotConfig = { 'P': 4, 'D': 4, 'C': 4, 'A': 4 };
+        const slotPlan = {};
+        const slotPurchases = {};
+        Object.entries(slotConfig).forEach(([role, count]) => {
+            slotPlan[role] = {};
+            slotPurchases[role] = {};
+            for (let i = 1; i <= count; i++) {
+                const slot = i.toString();
+                slotPlan[role][slot] = 0;
+                slotPurchases[role][slot] = 0;
+            }
+        });
+
+        function getRoleSlots(role) {
+            return Object.keys(slotPlan[role] || {});
+        }
+
+        function getAllSlots() {
+            const set = new Set();
+            Object.values(slotPlan).forEach(r => Object.keys(r).forEach(s => set.add(s)));
+            return Array.from(set).sort((a, b) => Number(a) - Number(b));
+        }
 
         function loadPurchased() {
             const saved = JSON.parse(localStorage.getItem('purchased') || '{}');
             Object.entries(saved).forEach(([key, data]) => {
                 const [role, name] = key.split(':');
-                const slot = data.slot || targets[key]?.slot || '4';
+                const roleSlots = getRoleSlots(role);
+                const slot = data.slot || targets[key]?.slot || roleSlots[roleSlots.length - 1];
                 purchased[key] = { ...data, slot };
                 budget.total.spent += data.price;
                 budget.roles[role] = budget.roles[role] || { spent: 0, count: 0 };
@@ -1083,12 +989,58 @@
                 if (e.target === modal) modal.style.display = 'none';
             });
 
+            renderSquadPlanner();
             setupSquadPlanner();
         }
 
+        function renderSquadPlanner() {
+            const planner = document.getElementById('squad-planner');
+            if (!planner) return;
+            planner.innerHTML = '';
+            Object.keys(slotPlan).forEach(role => {
+                const row = document.createElement('div');
+                row.className = 'role-section planner-row';
+
+                const roleDiv = document.createElement('div');
+                roleDiv.className = 'planner-role';
+                roleDiv.textContent = role;
+                row.appendChild(roleDiv);
+
+                const slotsDiv = document.createElement('div');
+                slotsDiv.className = 'planner-slots';
+                getRoleSlots(role).forEach(slot => {
+                    const slotDiv = document.createElement('div');
+                    slotDiv.className = 'slot';
+
+                    const label = document.createElement('span');
+                    label.className = 'slot-label';
+                    label.textContent = slot;
+                    slotDiv.appendChild(label);
+
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.className = 'slot-input';
+                    input.id = `slot-plan-${role}-${slot}`;
+                    input.min = '0';
+                    input.value = slotPlan[role][slot];
+                    slotDiv.appendChild(input);
+
+                    const small = document.createElement('small');
+                    small.id = `slot-count-${role}-${slot}`;
+                    small.textContent = `${slotPurchases[role][slot]}/${slotPlan[role][slot]}`;
+                    slotDiv.appendChild(small);
+
+                    slotsDiv.appendChild(slotDiv);
+                });
+
+                row.appendChild(slotsDiv);
+                planner.appendChild(row);
+            });
+        }
+
         function setupSquadPlanner() {
-            ['P','D','C','A'].forEach(role => {
-                slotTypes.forEach(slot => {
+            Object.keys(slotPlan).forEach(role => {
+                getRoleSlots(role).forEach(slot => {
                     const input = document.getElementById(`slot-plan-${role}-${slot}`);
                     if (input) {
                         input.addEventListener('input', e => {
@@ -1323,7 +1275,7 @@
                 document.getElementById(`budget-${role}-max`).textContent = budget.roles[role].max;
                 document.getElementById(`count-${role}`).textContent = budget.roles[role].count;
                 document.getElementById(`needed-${role}`).textContent = budget.roles[role].needed;
-                slotTypes.forEach(slot => {
+                getRoleSlots(role).forEach(slot => {
                     const span = document.getElementById(`slot-count-${role}-${slot}`);
                     if (span) {
                         span.textContent = `${slotPurchases[role][slot]}/${slotPlan[role][slot]}`;
@@ -1347,7 +1299,7 @@
             ['P','D','C','A'].forEach(role => {
                 slotBudgets[role] = {};
                 const total = Object.values(slotPlan[role]).reduce((a, b) => a + parseInt(b || 0), 0);
-                slotTypes.forEach(slot => {
+                getRoleSlots(role).forEach(slot => {
                     slotBudgets[role][slot] = total ? budget.roles[role].max * (slotPlan[role][slot] || 0) / total : 0;
                 });
             });
@@ -1386,9 +1338,9 @@
                         <div class="player-card ${boughtClass} ${externalClass}">
                             <div class="player-info">
                                 <div class="player-name">${roleIcons[role] ?? ''} ${t.name}</div>
-                                <div class="player-team">Ruolo: ${role} • Slot 
+                                 <div class="player-team">Ruolo: ${role} • Slot
                                     <select class="slot-select" data-key="${key}" data-role="${role}">
-                                        ${slotTypes.map(s => `<option value="${s}" ${t.slot == s ? 'selected' : ''}>${s}</option>`).join('')}
+                                        ${getRoleSlots(role).map(s => `<option value="${s}" ${t.slot == s ? 'selected' : ''}>${s}</option>`).join('')}
                                     </select>
                                 </div>
                             </div>
@@ -1434,7 +1386,7 @@
                 });
 
                 let html = '';
-                slotTypes.forEach(slot => {
+                getAllSlots().forEach(slot => {
                     const players = grouped[slot] || [];
                     const remaining = ['P','D','C','A'].map(role => `${role}:${getRemainingSlotQuota(role, slot)}`).join(' ');
                     html += `<li><strong>${slot} (${remaining})</strong></li>`;
@@ -1462,8 +1414,9 @@
                 }
             } else {
                 const player = findPlayer(name, role);
-                let slot = prompt('Seleziona slot (1-4):', '4');
-                if (!slotTypes.includes(slot)) return;
+                const roleSlots = getRoleSlots(role);
+                let slot = prompt(`Seleziona slot (1-${roleSlots.length}):`, roleSlots[roleSlots.length - 1]);
+                if (!roleSlots.includes(slot)) return;
                 const prices = player ? calculateTargetPrices(player, role) : undefined;
                 targets[key] = prices
                     ? { name, role, price, slot, prices }
@@ -1494,8 +1447,9 @@
             if (purchased[key]) return;
             let slot = targets[key]?.slot;
             if (!slot) {
-                slot = prompt('Seleziona slot per acquisto (1-4):', '4');
-                if (!slotTypes.includes(slot)) slot = '4';
+                const roleSlots = getRoleSlots(role);
+                slot = prompt(`Seleziona slot per acquisto (1-${roleSlots.length}):`, roleSlots[roleSlots.length - 1]);
+                if (!roleSlots.includes(slot)) slot = roleSlots[roleSlots.length - 1];
             }
             const player = findPlayer(name, role);
             const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
