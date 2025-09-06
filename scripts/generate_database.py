@@ -27,12 +27,6 @@ SOURCES = {
 
 def load_source(path: Path) -> list[dict]:
     wb = load_workbook(path, read_only=True)
-    ws = wb.active
-    rows = ws.iter_rows(values_only=True)
-    try:
-        header = [str(c).lower() for c in next(rows)]
-    except StopIteration:  # empty sheet
-        return []
     mapping = {
         "nome": "name",
         "ruolo": "role",
@@ -48,28 +42,34 @@ def load_source(path: Path) -> list[dict]:
         "mv": "rating",
         "commento": "comm",
     }
-    cols = [mapping.get(c, c) for c in header]
     result: list[dict] = []
-    for row in rows:
-        if all(cell is None for cell in row):
+    for ws in wb.worksheets:
+        rows = ws.iter_rows(values_only=True)
+        try:
+            header = [str(c).lower() for c in next(rows)]
+        except StopIteration:  # empty sheet
             continue
-        data = {cols[i]: row[i] for i in range(len(cols))}
-        for col in ["team", "goals", "assists", "minutes", "rating", "comm"]:
-            if col not in data or data[col] is None:
-                data[col] = "" if col in ("team", "comm") else 0
-        result.append(
-            {
-                "name": data.get("name", ""),
-                "team": data.get("team", ""),
-                "role": data.get("role", ""),
-                "price": data.get("price", 0),
-                "goals": data.get("goals", 0),
-                "assists": data.get("assists", 0),
-                "minutes": data.get("minutes", 0),
-                "rating": data.get("rating", 0),
-                "comm": data.get("comm", ""),
-            }
-        )
+        cols = [mapping.get(c, c) for c in header]
+        for row in rows:
+            if all(cell is None for cell in row):
+                continue
+            data = {cols[i]: row[i] for i in range(len(cols))}
+            for col in ["team", "goals", "assists", "minutes", "rating", "comm"]:
+                if col not in data or data[col] is None:
+                    data[col] = "" if col in ("team", "comm") else 0
+            result.append(
+                {
+                    "name": data.get("name", ""),
+                    "team": data.get("team", ""),
+                    "role": data.get("role", ""),
+                    "price": data.get("price", 0),
+                    "goals": data.get("goals", 0),
+                    "assists": data.get("assists", 0),
+                    "minutes": data.get("minutes", 0),
+                    "rating": data.get("rating", 0),
+                    "comm": data.get("comm", ""),
+                }
+            )
     return result
 
 
