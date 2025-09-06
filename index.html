@@ -55,21 +55,21 @@
             margin-top: 15px;
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .nav-btn {
-            padding: 8px 16px;
-            border-radius: 12px;
+            padding: 6px 18px;
+            border-radius: 25px;
             border: none;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
             color: white;
             cursor: pointer;
         }
 
         .nav-btn.active {
-            background: white;
-            color: #2563eb;
+            background: #3b82f6;
+            color: white;
             font-weight: bold;
         }
 
@@ -469,6 +469,14 @@
         }
 
         @media (max-width: 768px) {
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+
+            .nav-btn {
+                padding: 6px 14px;
+                font-size: 0.9rem;
+            }
             .main-content {
                 grid-template-columns: 1fr;
                 gap: 20px;
@@ -490,6 +498,14 @@
         }
 
         @media (max-width: 480px) {
+            .nav-tabs {
+                gap: 6px;
+            }
+
+            .nav-btn {
+                padding: 4px 12px;
+                font-size: 0.85rem;
+            }
             .header h1 {
                 font-size: 1.8rem;
             }
