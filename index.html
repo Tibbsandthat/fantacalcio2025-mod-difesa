@@ -806,11 +806,6 @@
                     </table>
                 </div>
 
-                <details class="sidebar-card" open>
-                    <summary class="sidebar-card-title">🎯 Obiettivi</summary>
-                    <ul class="recommendations" id="target-list"></ul>
-                </details>
-
                 <details class="sidebar-card">
                     <summary class="sidebar-card-title">🤖 AI Insights</summary>
                     <div class="insight-text" id="ai-insight">
@@ -825,20 +820,6 @@
                             <div class="recommendation-text">Caricamento opportunità...</div>
                         </li>
                     </ul>
-                </details>
-
-                <details class="sidebar-card">
-                    <summary class="sidebar-card-title">📈 Trend Prezzi</summary>
-                    <div class="quick-stats">
-                        <div class="quick-stat">
-                            <div class="quick-stat-value" id="rising-trend">+12%</div>
-                            <div class="quick-stat-label">Trend Rialzista</div>
-                        </div>
-                        <div class="quick-stat">
-                            <div class="quick-stat-value" id="volatility">Low</div>
-                            <div class="quick-stat-label">Volatilità</div>
-                        </div>
-                    </div>
                 </details>
             </div>
         </div>
@@ -1613,42 +1594,7 @@
                 document.getElementById('avg-price').textContent = `€${avgPrice}`;
             }
 
-            updatePriceTrends();
             updateTopOpportunities();
-        }
-
-        function updatePriceTrends() {
-            const roles = currentRole === 'all' ? ['P', 'D', 'C', 'A'] : [currentRole];
-            let percentChanges = [];
-            let volatilities = [];
-
-            roles.forEach(role => {
-                const players = PLAYERS_DB[role] || [];
-                const filteredPlayers = filterPlayers(players, role);
-                filteredPlayers.forEach(playerArray => {
-                    const player = decodePlayer(playerArray, role);
-                    const priceEntries = Object.entries(player.allPrices || {}).sort((a, b) => a[0].localeCompare(b[0]));
-                    const prices = priceEntries.map(([, price]) => Number(price)).filter(p => !isNaN(p));
-
-                    if (prices.length >= 2) {
-                        const change = ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100;
-                        percentChanges.push(change);
-
-                        const mean = prices.reduce((sum, p) => sum + p, 0) / prices.length;
-                        const variance = prices.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / prices.length;
-                        volatilities.push(Math.sqrt(variance));
-                    }
-                });
-            });
-
-            const avgChange = percentChanges.length ? percentChanges.reduce((a, b) => a + b, 0) / percentChanges.length : 0;
-            document.getElementById('rising-trend').textContent = `${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(1)}%`;
-
-            const avgVolatility = volatilities.length ? volatilities.reduce((a, b) => a + b, 0) / volatilities.length : 0;
-            let volLabel = 'Low';
-            if (avgVolatility > 5) volLabel = 'High';
-            else if (avgVolatility > 2) volLabel = 'Medium';
-            document.getElementById('volatility').textContent = volLabel;
         }
 
         function updateTopOpportunities() {
