@@ -298,10 +298,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 60px;
-            min-width: 60px;
-            height: 50px;
-            min-height: 50px;
+            width: fit-content;
             padding: 4px 8px;
             border-radius: var(--radius);
             background: var(--color-primary);
@@ -812,8 +809,8 @@
                         <input type="range" class="range-input" id="min-price" min="1" max="200" value="1" step="1">
                         <input type="range" class="range-input" id="max-price" min="1" max="200" value="200" step="1">
                         <div class="range-values">
-                            <span id="min-price-val">1<span class="coin-icon">🪙</span></span>
-                            <span id="max-price-val">200<span class="coin-icon">🪙</span></span>
+                            <span id="min-price-val">1</span>
+                            <span id="max-price-val">200</span>
                         </div>
                     </div>
                 </div>
@@ -1218,8 +1215,8 @@
             
             currentFilters.maxPrice = maxPrice;
             
-            document.getElementById('min-price-val').innerHTML = currentFilters.minPrice + '<span class="coin-icon">🪙</span>';
-            document.getElementById('max-price-val').innerHTML = currentFilters.maxPrice + '<span class="coin-icon">🪙</span>';
+            document.getElementById('min-price-val').textContent = currentFilters.minPrice;
+            document.getElementById('max-price-val').textContent = currentFilters.maxPrice;
             
             renderPlayers();
         }
@@ -1455,7 +1452,7 @@
                                 <button class="action-btn" onclick="editTarget('${key}')">✏️</button>
                                 <button class="action-btn" onclick="promptBuyPlayer('${t.name}', ${Math.round(price)}, '${role}')">💸</button>
                                 <button class="action-btn" onclick="${othersInfo ? `unmarkBoughtElsewhere('${t.name}', '${role}')` : `markBoughtElsewhere('${t.name}', '${role}')`}">🚫</button>
-                                ${purchasedInfo ? `<button class="action-btn" onclick="unbuyPlayer('${t.name}', '${role}')">🔄</button><span class=\"purchase-badge\">${Math.round(purchasedInfo.price)}<span class=\"coin-icon\">🪙</span></span>` : ''}
+                                ${purchasedInfo ? `<button class="action-btn" onclick="unbuyPlayer('${t.name}', '${role}')">🔄</button><span class=\"purchase-badge\">${Math.round(purchasedInfo.price)}</span>` : ''}
                             </div>
                         </div>`;
                     });
@@ -1498,9 +1495,9 @@
                         const key = `${t.role}:${t.name}`;
                         const price = purchased[key]?.price ?? t.price;
                             if (t.prices) {
-                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal}<span class="coin-icon">🪙</span> S:${t.prices.suggested}<span class="coin-icon">🪙</span> M:${t.prices.max}<span class="coin-icon">🪙</span> • ${Math.round(price)}<span class="coin-icon">🪙</span>${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)}<span class="coin-icon">🪙</span>)` : ''}</li>`;
+                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>`;
                             } else {
-                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - ${Math.round(price)}<span class="coin-icon">🪙</span>${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)}<span class="coin-icon">🪙</span>)` : ''}</li>`;
+                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>`;
                             }
                     });
                 });
@@ -1582,7 +1579,7 @@
                     badge.className = 'purchase-badge';
                     actions.appendChild(badge);
                 }
-                badge.innerHTML = `${price}<span class="coin-icon">🪙</span>`;
+                badge.textContent = price;
             }
             targets[key] = targets[key] || { name, role, price, slot };
             targets[key].price = price;
@@ -1706,14 +1703,14 @@
                                 ${Math.round(player.prezzi.avg)}<span class="coin-icon">🪙</span>
                             </div>
                             <div class="price-range">
-                                ${Math.round(player.prezzi.min)}<span class="coin-icon">🪙</span>-${Math.round(player.prezzi.max)}<span class="coin-icon">🪙</span>
+                                ${Math.round(player.prezzi.min)}-${Math.round(player.prezzi.max)}
                             </div>
                         </div>
                     </div>
                     <div class="player-actions">
                         <button class="action-btn" onclick="event.stopPropagation(); toggleTarget('${player.nome}', '${role}', ${Math.round(player.prezzi.avg)})">🎯</button>
                         <button class="action-btn" onclick="event.stopPropagation(); promptBuyPlayer('${player.nome}', ${Math.round(player.prezzi.avg)}, '${role}')">💸</button>
-                        ${purchasedInfo ? `<button class="action-btn" onclick="event.stopPropagation(); unbuyPlayer('${player.nome}', '${role}')">🔄</button><span class=\"purchase-badge\">${Math.round(purchasedInfo.price)}<span class=\"coin-icon\">🪙</span></span>` : ''}
+                        ${purchasedInfo ? `<button class="action-btn" onclick="event.stopPropagation(); unbuyPlayer('${player.nome}', '${role}')">🔄</button><span class=\"purchase-badge\">${Math.round(purchasedInfo.price)}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -1809,7 +1806,7 @@
                         ${roleIcons[opp.role]} ${opp.nome} (${opp.team})
                     </div>
                     <div class="recommendation-price">
-                        Target: ${Math.round(opp.targetPrice)}<span class="coin-icon">🪙</span> crediti (Risparmio: ${Math.round(opp.savings)}<span class="coin-icon">🪙</span> crediti) • Affidabilità: ${opp.reliability}/5 • Forma: ${opp.recentForm.toFixed(2)}
+                        Target: ${Math.round(opp.targetPrice)} crediti (Risparmio: ${Math.round(opp.savings)} crediti) • Affidabilità: ${opp.reliability}/5 • Forma: ${opp.recentForm.toFixed(2)}
                     </div>
                 </li>
             `).join('') || '<li class="recommendation"><div class="recommendation-text">Nessuna opportunità con i filtri attuali</div></li>';
@@ -1833,7 +1830,7 @@
 
             const topPlayers = highReliability.slice(0, 3);
             const insightText = topPlayers.length
-                ? `Giocatori affidabili a basso costo: ${topPlayers.map(p => `${roleIcons[p.role]} ${p.nome} ${Math.round(p.prezzi.avg)}<span class="coin-icon">🪙</span> crediti`).join(', ')}`
+                ? `Giocatori affidabili a basso costo: ${topPlayers.map(p => `${roleIcons[p.role]} ${p.nome} ${Math.round(p.prezzi.avg)} crediti`).join(', ')}`
                 : 'Nessun giocatore affidabile trovato.';
 
             document.getElementById('ai-insight').innerHTML = insightText;
@@ -1862,15 +1859,15 @@
                         <div class="detail-title">💰 Analisi Prezzi Smart</div>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
                             <div style="text-align: center;">
-                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-warning);">${player.prezzi.min}<span class="coin-icon">🪙</span> crediti</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-warning);">${player.prezzi.min} crediti</div>
                                 <div style="font-size: var(--font-base); color: var(--text-muted);">Minimo</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-size: 1.8rem; font-weight: 600; color: var(--color-primary);">${player.prezzi.avg}<span class="coin-icon">🪙</span> crediti</div>
+                                <div style="font-size: 1.8rem; font-weight: 600; color: var(--color-primary);">${player.prezzi.avg} crediti</div>
                                 <div style="font-size: var(--font-base); color: var(--text-muted);">Consenso</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-success);">${player.prezzi.max}<span class="coin-icon">🪙</span> crediti</div>
+                                <div style="font-size: 1.5rem; font-weight: 600; color: var(--color-success);">${player.prezzi.max} crediti</div>
                                 <div style="font-size: var(--font-base); color: var(--text-muted);">Massimo</div>
                             </div>
                         </div>
@@ -1883,7 +1880,7 @@
                 detailsHtml += `
                     <div class="source-price">
                         <div class="source-name">${cleanSource}</div>
-                        <div class="source-value">${Math.round(price)}<span class="coin-icon">🪙</span> crediti</div>
+                        <div class="source-value">${Math.round(price)} crediti</div>
                     </div>
                 `;
             });
@@ -1932,9 +1929,9 @@
                     <div class="detail-section">
                         <div class="detail-title">🎯 Raccomandazione AI</div>
                         <div style="background: var(--card-bg); padding: 15px; border-radius: var(--radius); border-left: 4px solid var(--color-primary);">
-                            <strong>Ideale:</strong> ${priceHints.ideal}<span class="coin-icon">🪙</span> crediti<br>
-                            <strong>Suggerito:</strong> ${priceHints.suggested}<span class="coin-icon">🪙</span> crediti<br>
-                            <strong>Massimo:</strong> ${priceHints.max}<span class="coin-icon">🪙</span> crediti<br>
+                            <strong>Ideale:</strong> ${priceHints.ideal} crediti<br>
+                            <strong>Suggerito:</strong> ${priceHints.suggested} crediti<br>
+                            <strong>Massimo:</strong> ${priceHints.max} crediti<br>
                             <strong>Opportunità:</strong> ${getOpportunityLevel(player).toUpperCase()}<br>
                             <strong>Strategia:</strong> ${getOpportunityLevel(player) === 'high' ? 'Punta al prezzo minimo, alta volatilità' : 'Prezzo stabile, offri vicino al consenso'}
                         </div>
