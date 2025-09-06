@@ -381,6 +381,21 @@
             margin-top: 3px;
         }
 
+        .slots-planner {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .slots-planner th, .slots-planner td {
+            padding: 4px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .slot-input {
+            width: 40px;
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -691,6 +706,44 @@
                         <li>C: <span id="budget-C">0</span>/<span id="budget-C-max">150</span> (<span id="count-C">0</span>/<span id="needed-C">8</span>)</li>
                         <li>A: <span id="budget-A">0</span>/<span id="budget-A-max">140</span> (<span id="count-A">0</span>/<span id="needed-A">6</span>)</li>
                     </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">📌 Slots Planner</div>
+                    <table class="slots-planner">
+                        <tr>
+                            <th>R</th><th>Top</th><th>SemiTop</th><th>Jolly</th>
+                        </tr>
+                        <tr>
+                            <td>P</td>
+                            <td><input type="number" class="slot-input" id="slot-plan-P-Top" min="0" value="0"> <small id="slot-count-P-Top">0/0</small></td>
+                            <td><input type="number" class="slot-input" id="slot-plan-P-SemiTop" min="0" value="0"> <small id="slot-count-P-SemiTop">0/0</small></td>
+                            <td><input type="number" class="slot-input" id="slot-plan-P-Jolly" min="0" value="0"> <small id="slot-count-P-Jolly">0/0</small></td>
+                        </tr>
+                        <tr>
+                            <td>D</td>
+                            <td><input type="number" class="slot-input" id="slot-plan-D-Top" min="0" value="0"> <small id="slot-count-D-Top">0/0</small></td>
+                            <td><input type="number" class="slot-input" id="slot-plan-D-SemiTop" min="0" value="0"> <small id="slot-count-D-SemiTop">0/0</small></td>
+                            <td><input type="number" class="slot-input" id="slot-plan-D-Jolly" min="0" value="0"> <small id="slot-count-D-Jolly">0/0</small></td>
+                        </tr>
+                        <tr>
+                            <td>C</td>
+                            <td><input type="number" class="slot-input" id="slot-plan-C-Top" min="0" value="0"> <small id="slot-count-C-Top">0/0</small></td>
+                            <td><input type="number" class="slot-input" id="slot-plan-C-SemiTop" min="0" value="0"> <small id="slot-count-C-SemiTop">0/0</small></td>
+                            <td><input type="number" class="slot-input" id="slot-plan-C-Jolly" min="0" value="0"> <small id="slot-count-C-Jolly">0/0</small></td>
+                        </tr>
+                        <tr>
+                            <td>A</td>
+                            <td><input type="number" class="slot-input" id="slot-plan-A-Top" min="0" value="0"> <small id="slot-count-A-Top">0/0</small></td>
+                            <td><input type="number" class="slot-input" id="slot-plan-A-SemiTop" min="0" value="0"> <small id="slot-count-A-SemiTop">0/0</small></td>
+                            <td><input type="number" class="slot-input" id="slot-plan-A-Jolly" min="0" value="0"> <small id="slot-count-A-Jolly">0/0</small></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">🎯 Obiettivi</div>
+                    <ul class="recommendations" id="target-list"></ul>
                     <button id="open-strategy" class="action-btn" style="width: 100%; margin-top: 10px;">📐 Strategia</button>
                 </div>
 
@@ -783,6 +836,19 @@
         const strategy = {};
         const targets = JSON.parse(localStorage.getItem('targets') || '{}');
         const purchased = {};
+        const slotTypes = ['Top', 'SemiTop', 'Jolly'];
+        const slotPlan = {
+            'P': { Top: 0, SemiTop: 0, Jolly: 0 },
+            'D': { Top: 0, SemiTop: 0, Jolly: 0 },
+            'C': { Top: 0, SemiTop: 0, Jolly: 0 },
+            'A': { Top: 0, SemiTop: 0, Jolly: 0 }
+        };
+        const slotPurchases = {
+            'P': { Top: 0, SemiTop: 0, Jolly: 0 },
+            'D': { Top: 0, SemiTop: 0, Jolly: 0 },
+            'C': { Top: 0, SemiTop: 0, Jolly: 0 },
+            'A': { Top: 0, SemiTop: 0, Jolly: 0 }
+        };
 
         function loadPurchased() {
             const saved = JSON.parse(localStorage.getItem('purchased') || '{}');
@@ -866,19 +932,37 @@
                 if (e.target === modal) modal.style.display = 'none';
             });
 
-            // Strategy modal
-            const strategyModal = document.getElementById('strategy-modal');
-            const strategyClose = strategyModal.querySelector('.close');
-            document.getElementById('open-strategy').addEventListener('click', openStrategyModal);
-            strategyClose.addEventListener('click', () => strategyModal.style.display = 'none');
-            document.getElementById('save-strategy').addEventListener('click', saveStrategy);
-            window.addEventListener('click', (e) => {
-                if (e.target === strategyModal) strategyModal.style.display = 'none';
-            });
+            setupSlotPlanner();
+        }
 
-            // Navigation
-            document.getElementById('nav-home').addEventListener('click', showMainView);
-            document.getElementById('nav-targets').addEventListener('click', showTargetsView);
+        function setupSlotPlanner() {
+            ['P','D','C','A'].forEach(role => {
+                slotTypes.forEach(slot => {
+                    const input = document.getElementById(`slot-plan-${role}-${slot}`);
+                    if (input) {
+                        input.addEventListener('input', e => {
+                            slotPlan[role][slot] = parseInt(e.target.value) || 0;
+                            updateBudgetUI();
+                            updateTargetsUI();
+                        });
+                    }
+                });
+            });
+        }
+
+        // Strategy modal
+        const strategyModal = document.getElementById('strategy-modal');
+        const strategyClose = strategyModal.querySelector('.close');
+        document.getElementById('open-strategy').addEventListener('click', openStrategyModal);
+        strategyClose.addEventListener('click', () => strategyModal.style.display = 'none');
+        document.getElementById('save-strategy').addEventListener('click', saveStrategy);
+        window.addEventListener('click', (e) => {
+            if (e.target === strategyModal) strategyModal.style.display = 'none';
+        });
+
+        // Navigation
+        document.getElementById('nav-home').addEventListener('click', showMainView);
+        document.getElementById('nav-targets').addEventListener('click', showTargetsView);
         }
 
         function handleSearch(e) {
@@ -1092,7 +1176,42 @@
                 document.getElementById(`budget-${role}-max`).textContent = budget.roles[role].max;
                 document.getElementById(`count-${role}`).textContent = budget.roles[role].count;
                 document.getElementById(`needed-${role}`).textContent = budget.roles[role].needed;
+                slotTypes.forEach(slot => {
+                    const span = document.getElementById(`slot-count-${role}-${slot}`);
+                    if (span) {
+                        span.textContent = `${slotPurchases[role][slot]}/${slotPlan[role][slot]}`;
+                    }
+                });
             });
+        }
+
+        function getRemainingSlotQuota(role, slot) {
+            return Math.max((slotPlan[role][slot] || 0) - (slotPurchases[role][slot] || 0), 0);
+        }
+
+        function checkSlotAlert(role, slot) {
+            if (getRemainingSlotQuota(role, slot) <= 0) {
+                alert(`Quota slot ${slot} per ruolo ${role} raggiunta`);
+            }
+        }
+
+        function calculateTargetPrices() {
+            const slotBudgets = {};
+            ['P','D','C','A'].forEach(role => {
+                slotBudgets[role] = {};
+                const total = Object.values(slotPlan[role]).reduce((a, b) => a + parseInt(b || 0), 0);
+                slotTypes.forEach(slot => {
+                    slotBudgets[role][slot] = total ? budget.roles[role].max * (slotPlan[role][slot] || 0) / total : 0;
+                });
+            });
+
+            Object.values(targets).forEach(t => {
+                const slotBudget = slotBudgets[t.role]?.[t.slot] || 0;
+                const plannedCount = slotPlan[t.role]?.[t.slot] || 1;
+                t.targetPrice = Math.round(slotBudget / plannedCount);
+            });
+
+            return slotBudgets;
         }
 
         function updateTargetsUI() {
@@ -1132,14 +1251,29 @@
             // Render simple list (if present)
             const list = document.getElementById('target-list');
             if (list) {
-                list.innerHTML = Object.entries(targets).map(([key, t]) => {
-                    const price = purchased[key]?.price ?? t.price;
-                    if (t.prices) {
-                        return `<li class="recommendation">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • €${price}</li>`;
-                    } else {
-                        return `<li class="recommendation">${t.name} (${t.role}) - €${price}</li>`;
-                    }
-                }).join('');
+                calculateTargetPrices();
+                const grouped = {};
+                Object.values(targets).forEach(t => {
+                    if (!grouped[t.slot]) grouped[t.slot] = [];
+                    grouped[t.slot].push(t);
+                });
+
+                let html = '';
+                slotTypes.forEach(slot => {
+                    const players = grouped[slot] || [];
+                    const remaining = ['P','D','C','A'].map(role => `${role}:${getRemainingSlotQuota(role, slot)}`).join(' ');
+                    html += `<li><strong>${slot} (${remaining})</strong></li>`;
+                    players.forEach(t => {
+                        const key = `${t.role}:${t.name}`;
+                        const price = purchased[key]?.price ?? t.price;
+                        if (t.prices) {
+                            html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • €${price}${t.targetPrice ? ` (TP: €${t.targetPrice})` : ''}</li>`;
+                        } else {
+                            html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - €${price}${t.targetPrice ? ` (TP: €${t.targetPrice})` : ''}</li>`;
+                        }
+                    });
+                });
+                list.innerHTML = html;
             }
         }
 
@@ -1149,8 +1283,12 @@
                 delete targets[key];
             } else {
                 const player = findPlayer(name, role);
-                if (!player) return;
-                targets[key] = { name, role, prices: calculateTargetPrices(player, role) };
+                let slot = prompt('Seleziona slot (Top, SemiTop, Jolly):', 'Top');
+                if (!slotTypes.includes(slot)) return;
+                const prices = player ? calculateTargetPrices(player, role) : undefined;
+                targets[key] = prices
+                    ? { name, role, price, slot, prices }
+                    : { name, role, price, slot };
             }
             updateTargetsUI();
         }
@@ -1175,13 +1313,18 @@
         function buyPlayer(name, price, role) {
             const key = `${role}:${name}`;
             if (purchased[key]) return;
+            let slot = targets[key]?.slot;
+            if (!slot) {
+                slot = prompt('Seleziona slot per acquisto (Top, SemiTop, Jolly):', 'Jolly');
+                if (!slotTypes.includes(slot)) slot = 'Jolly';
+            }
             const player = findPlayer(name, role);
             const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
             purchased[key] = { name, role, price };
-        }
             budget.total.spent += price;
             budget.roles[role].spent += price;
             budget.roles[role].count += 1;
+            slotPurchases[role][slot] += 1;
             updateBudgetUI();
             const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
             if (el) {
@@ -1199,6 +1342,7 @@
             targets[key].price = price;
             updateTargetsUI();
             checkAlerts(role);
+            checkSlotAlert(role, slot);
             if (price < hints.ideal || price < hints.suggested) {
                 updateSmartPricing();
             }
