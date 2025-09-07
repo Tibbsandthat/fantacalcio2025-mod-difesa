@@ -1632,10 +1632,10 @@
             const slots = getRoleSlots(role).filter(s => s !== slot);
             if (!slots.length) return;
             const currentBudgets = calculateSlotBudgets()[role];
-            const total = slots.reduce((sum, s) => sum + (currentBudgets[s] - (slotBudgetAdjustments[role][s] || 0)), 0);
+            const total = slots.reduce((sum, s) => sum + currentBudgets[s], 0);
             if (total <= 0) return;
             slots.forEach(s => {
-                const share = (currentBudgets[s] - (slotBudgetAdjustments[role][s] || 0)) / total;
+                const share = currentBudgets[s] / total;
                 slotBudgetAdjustments[role][s] = (slotBudgetAdjustments[role][s] || 0) + delta * share;
             });
         }
