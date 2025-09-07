@@ -1576,14 +1576,36 @@
                 });
             });
             return slotBudgets;
-        }
+         }
 
         function recomputeSlotTargets() {
             const slotBudgets = calculateSlotBudgets();
+            const grouped = {};
             Object.entries(targets).forEach(([key, t]) => {
-                const slotBudget = slotBudgets[t.role]?.[t.slot] || 0;
-                const plannedCount = slotPlan[t.role]?.[t.slot] || 1;
-                targets[key].targetPrice = Math.round(slotBudget / plannedCount);
+                const slotKey = `${t.role}:${t.slot}`;
+                const budget = slotBudgets[t.role]?.[t.slot] || 0;
+                const plannedCount = slotPlan?.[t.role]?.[t.slot] || 0;
+                const basePrice = Number(t.price) || 0;
+                grouped[slotKey] = grouped[slotKey] || { budget, plannedCount, players: [], sum: 0 };
+                grouped[slotKey].budget = budget;
+                if (plannedCount) grouped[slotKey].plannedCount = plannedCount;
+                grouped[slotKey].players.push({ key, basePrice });
+                grouped[slotKey].sum += basePrice;
+            });
+            Object.values(grouped).forEach(group => {
+                const { budget, sum, players } = group;
+                if (sum > 0) {
+                    const scaleFactor = budget / sum;
+                    players.forEach(({ key, basePrice }) => {
+                        targets[key].targetPrice = Math.round(basePrice * scaleFactor);
+                    });
+                } else {
+                    const count = group.plannedCount || players.length || 1;
+                    const per = Math.round(budget / count);
+                    players.forEach(({ key }) => {
+                        targets[key].targetPrice = per;
+                    });
+                }
             });
         }
 
