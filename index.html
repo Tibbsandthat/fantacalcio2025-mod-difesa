@@ -1525,9 +1525,9 @@
                 const planned = slotPlan[role]?.[slot] || 0;
                 const perPlayer = planned > 0 ? slotBudget / planned : 0;
                 return {
-                    ideal: Math.round(Math.min(player.prezzi.min, perPlayer)),
-                    suggested: Math.round(Math.min(player.prezzi.avg, perPlayer)),
-                    max: Math.round(Math.min(player.prezzi.max, slotBudget))
+                    ideal: Math.round(perPlayer),
+                    suggested: Math.round(perPlayer),
+                    max: Math.round(slotBudget)
                 };
             } else {
                 const roleData = budget.roles[role];
@@ -1535,9 +1535,9 @@
                 const remainingSlots = roleData.needed - roleData.count;
                 const perSlot = remainingSlots > 0 ? Math.floor(remainingBudget / remainingSlots) : 0;
                 return {
-                    ideal: Math.round(Math.min(player.prezzi.min, perSlot)),
-                    suggested: Math.round(Math.min(player.prezzi.avg, perSlot)),
-                    max: Math.round(Math.min(player.prezzi.max, remainingBudget))
+                    ideal: Math.round(perSlot),
+                    suggested: Math.round(perSlot),
+                    max: Math.round(remainingBudget)
                 };
             }
         }
