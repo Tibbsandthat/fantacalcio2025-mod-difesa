@@ -975,6 +975,7 @@
                 'A': { max: 140, spent: 0, count: 0, needed: 6 }
             }
         };
+        const initialTotal = budget.total.max;
         const strategy = {};
         const targets = JSON.parse(localStorage.getItem('targets') || '{}');
         const purchased = {};
@@ -1488,9 +1489,9 @@
         }
 
         function updateSmartPricing() {
-            const remainingTotal = budget.total.max - budget.total.spent;
+            budget.total.max = initialTotal;
             ['P','D','C','A'].forEach(role => {
-                budget.roles[role].max = budget.roles[role].spent + Math.round(remainingTotal * (strategy[role] || 0) / 100);
+                budget.roles[role].max = Math.round(initialTotal * (strategy[role] || 0) / 100);
             });
             Object.keys(targets).forEach(key => {
                 const t = targets[key];
@@ -1505,17 +1506,9 @@
         }
 
         function saveStrategy() {
-            const total = budget.total.max;
-            let newTotal = 0;
             ['P','D','C','A'].forEach(role => {
-                const val = parseInt(budgetView.querySelector(`#strategy-${role}`).value) || 0;
-                strategy[role] = val;
-                const roleMax = Math.round(total * val / 100);
-                budget.roles[role].max = roleMax;
-                newTotal += roleMax;
+                strategy[role] = parseInt(budgetView.querySelector(`#strategy-${role}`).value) || 0;
             });
-            budget.total.max = newTotal;
-            updateBudgetUI();
             updateSmartPricing();
         }
 
