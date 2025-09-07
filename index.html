@@ -1507,17 +1507,30 @@
                     slotBudgets[role][slot] = total ? budget.roles[role].max * (slotPlan[role][slot] || 0) / total : 0;
                 });
             });
-
-            Object.values(targets).forEach(t => {
-                const slotBudget = slotBudgets[t.role]?.[t.slot] || 0;
-                const plannedCount = slotPlan[t.role]?.[t.slot] || 1;
-                t.targetPrice = Math.round(slotBudget / plannedCount);
-            });
-
             return slotBudgets;
         }
 
+        function recomputeSlotTargets() {
+            const slotBudgets = calculateSlotBudgets();
+            const grouped = {};
+            Object.entries(targets).forEach(([key, t]) => {
+                const slotKey = `${t.role}:${t.slot}`;
+                const budget = slotBudgets[t.role]?.[t.slot] || 0;
+                const basePrice = Number(t.price) || 0;
+                grouped[slotKey] = grouped[slotKey] || { budget, players: [], sum: 0 };
+                grouped[slotKey].players.push({ key, basePrice });
+                grouped[slotKey].sum += basePrice;
+            });
+            Object.values(grouped).forEach(group => {
+                const scaleFactor = group.sum ? (group.budget / group.sum) : 0;
+                group.players.forEach(({ key, basePrice }) => {
+                    targets[key].targetPrice = Math.round(basePrice * scaleFactor);
+                });
+            });
+        }
+
         function updateTargetsUI() {
+            recomputeSlotTargets();
             localStorage.setItem('targets', JSON.stringify(targets));
 
             // Render grid (if present)
@@ -1535,7 +1548,7 @@
                     grouped[role].forEach(([key, t]) => {
                         const purchasedInfo = purchased[key];
                         const othersInfo = others[key];
-                        const price = purchasedInfo?.price ?? t.price;
+                        const price = purchasedInfo?.price ?? (t.targetPrice ?? t.price);
                         const playerData = findPlayer(t.name, t.role);
                         const boughtClass = purchasedInfo ? 'bought' : '';
                         const externalClass = othersInfo ? 'bought-elsewhere' : '';
@@ -1590,7 +1603,6 @@
             // Render simple list (if present)
             const list = document.getElementById('target-list');
             if (list) {
-                calculateSlotBudgets();
                 const grouped = {};
                 Object.values(targets).forEach(t => {
                     if (!grouped[t.slot]) grouped[t.slot] = [];
@@ -1604,13 +1616,13 @@
                     html += `<li><strong>${slot} (${remaining})</strong></li>`;
                     players.forEach(t => {
                         const key = `${t.role}:${t.name}`;
-                        const price = purchased[key]?.price ?? t.price;
+                        const price = purchased[key]?.price ?? (t.targetPrice ?? t.price);
                         const playerDataList = findPlayer(t.name, t.role);
                         const commentList = playerDataList?.notes?.comm ? `<div style="margin-left:10px;color:var(--text-muted);">${playerDataList.notes.comm}</div>` : '';
                             if (t.prices) {
-                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>${commentList}`;
+                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - I:${t.prices.ideal} S:${t.prices.suggested} M:${t.prices.max} • ${Math.round(price)}</li>${commentList}`;
                             } else {
-                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - ${Math.round(price)}${t.targetPrice ? ` (TP: ${Math.round(t.targetPrice)})` : ''}</li>${commentList}`;
+                                html += `<li class="recommendation" style="margin-left:10px;">${t.name} (${t.role}) - ${Math.round(price)}</li>${commentList}`;
                             }
                     });
                 });
@@ -1697,6 +1709,7 @@
             targets[key] = targets[key] || { name, role, price, slot };
             targets[key].price = price;
             targets[key].slot = targets[key].slot || slot;
+            recomputeSlotTargets();
             updateTargetsUI();
             renderPlayers();
             checkAlerts(role);
@@ -1728,6 +1741,7 @@
                 const badge = actions.querySelector('.purchase-badge');
                 if (badge) badge.remove();
             }
+            recomputeSlotTargets();
             updateTargetsUI();
             renderPlayers();
         }
