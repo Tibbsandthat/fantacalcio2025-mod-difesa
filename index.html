@@ -1281,12 +1281,9 @@
                 const input = document.getElementById(`slot-plan-${role}-${slot}`);
                 if (input) {
                     input.addEventListener('input', e => {
+                        slotBudgetAdjustments[role][slot] = 0;
                         slotPlan[role][slot] = parseInt(e.target.value) || 0;
-                        updateBudgetUI();
-                        recomputeSlotTargets();
-                        filterFeasibleTargets();
                         updateSmartPricing();
-                        updateTargetsUI();
                         updateSlotSummary(role);
                     });
                 }
