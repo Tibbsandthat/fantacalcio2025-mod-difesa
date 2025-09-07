@@ -221,6 +221,10 @@
             opacity: 0.6;
         }
 
+        .player-card.unreachable {
+            opacity: 0.4;
+        }
+
         .player-card .player-actions {
             margin-left: auto;
             display: flex;
@@ -885,6 +889,13 @@
                 <button class="nav-btn" data-role="A">A</button>
             </div>
             <div class="planner-container" id="squad-planner"></div>
+            <div class="filters" id="target-role-filters">
+                <button class="filter-btn active" data-role="all">Tutti</button>
+                <button class="filter-btn" data-role="P">P</button>
+                <button class="filter-btn" data-role="D">D</button>
+                <button class="filter-btn" data-role="C">C</button>
+                <button class="filter-btn" data-role="A">A</button>
+            </div>
             <div class="players-grid" id="targets-grid"></div>
         </div>
         <div id="budget-view">
@@ -956,6 +967,7 @@
         let PLAYERS_DB = {};
         // Global variables
         let currentRole = 'all';
+        let currentTargetRole = 'all';
         let searchTerm = '';
         let currentFilters = {
             price: 'all',
@@ -966,8 +978,9 @@
         };
 
         // Budget and target tracking
+        const initialTotal = 500;
         const budget = {
-            total: { max: 500, spent: 0 },
+            total: { max: initialTotal, spent: 0 },
             roles: {
                 'P': { max: 50, spent: 0, count: 0, needed: 3 },
                 'D': { max: 160, spent: 0, count: 0, needed: 8 },
@@ -984,6 +997,7 @@
         const slotConfig = { 'P': 4, 'D': 4, 'C': 4, 'A': 4 };
         const slotPlan = {};
         const slotPurchases = {};
+        const slotBudgetAdjustments = { 'P': {}, 'D': {}, 'C': {}, 'A': {} };
         let simulationActive = false;
         let simBudget = null;
         let simTargets = null;
@@ -993,10 +1007,12 @@
         Object.entries(slotConfig).forEach(([role, count]) => {
             slotPlan[role] = {};
             slotPurchases[role] = {};
+            slotBudgetAdjustments[role] = {};
             for (let i = 1; i <= count; i++) {
                 const slot = i.toString();
                 slotPlan[role][slot] = 0;
                 slotPurchases[role][slot] = 0;
+                slotBudgetAdjustments[role][slot] = 0;
             }
         });
 
@@ -1017,7 +1033,8 @@
                 const roleSlots = getRoleSlots(role);
                 const slot = data.slot || targets[key]?.slot || roleSlots[roleSlots.length - 1];
                 const price = Math.round(data.price);
-                purchased[key] = { ...data, slot, price };
+                const delta = data.delta || 0;
+                purchased[key] = { ...data, slot, price, delta };
                 budget.total.spent += price;
                 budget.roles[role] = budget.roles[role] || { spent: 0, count: 0 };
                 budget.roles[role].spent += price;
@@ -1026,6 +1043,8 @@
                 targets[key] = targets[key] || { name, role, price, slot };
                 targets[key].slot = targets[key].slot || slot;
                 targets[key].price = price;
+                targets[key].fixedPrice = price;
+                redistributeDelta(role, slot, delta);
             });
             const othersSaved = JSON.parse(localStorage.getItem('others') || '{}');
             Object.entries(othersSaved).forEach(([key, data]) => {
@@ -1066,6 +1085,8 @@
             document.getElementById('simulation-panel').style.display = 'none';
             simBudget = simTargets = simSlotPurchases = simPurchased = null;
             updateBudgetUI();
+            recomputeSlotTargets();
+            filterFeasibleTargets();
             updateTargetsUI();
             renderPlayers();
         }
@@ -1082,6 +1103,8 @@
             history.replaceState({ view: 'main' }, '');
             loadPurchased();
             updateBudgetUI();
+            recomputeSlotTargets();
+            filterFeasibleTargets();
             updateTargetsUI();
             document.getElementById('toggle-sim').addEventListener('click', startSimulation);
             document.getElementById('apply-sim').addEventListener('click', applySimulation);
@@ -1127,6 +1150,8 @@
             }
 
             updateBudgetUI();
+            recomputeSlotTargets();
+            filterFeasibleTargets();
             updateTargetsUI();
             renderPlayers();
         }
@@ -1134,10 +1159,13 @@
         function setupEventListeners() {
             // Search input
             document.getElementById('search-input').addEventListener('input', handleSearch);
-            
+
             // Role filters
-            document.querySelectorAll('.filter-btn').forEach(btn => {
+            document.querySelectorAll('#role-filters .filter-btn').forEach(btn => {
                 btn.addEventListener('click', handleRoleFilter);
+            });
+            document.querySelectorAll('#target-role-filters .filter-btn').forEach(btn => {
+                btn.addEventListener('click', handleTargetRoleFilter);
             });
             
             // Advanced filters
@@ -1168,6 +1196,7 @@
                     renderSquadPlanner();
                     setupSquadPlanner();
                     updateBudgetUI();
+                    filterFeasibleTargets();
                     updateTargetsUI();
                 });
             });
@@ -1253,6 +1282,8 @@
                     input.addEventListener('input', e => {
                         slotPlan[role][slot] = parseInt(e.target.value) || 0;
                         updateBudgetUI();
+                        recomputeSlotTargets();
+                        filterFeasibleTargets();
                         updateTargetsUI();
                         updateSlotSummary(role);
                     });
@@ -1296,11 +1327,19 @@
 
         function handleRoleFilter(e) {
             // Update active button
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#role-filters .filter-btn').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
-            
+
             currentRole = e.target.dataset.role;
             renderPlayers();
+        }
+
+        function handleTargetRoleFilter(e) {
+            document.querySelectorAll('#target-role-filters .filter-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            currentTargetRole = e.target.dataset.role;
+            filterFeasibleTargets();
+            updateTargetsUI();
         }
 
         function handleAdvancedFilter() {
@@ -1328,6 +1367,8 @@
             document.getElementById('nav-home').classList.remove('active');
             document.getElementById('nav-targets').classList.add('active');
             document.getElementById('nav-budget').classList.remove('active');
+            recomputeSlotTargets();
+            filterFeasibleTargets();
             updateTargetsUI();
             if (push) history.pushState({ view: 'targets' }, '');
         }
@@ -1489,10 +1530,12 @@
         }
 
         function updateSmartPricing() {
+
             budget.total.max = initialTotal;
             ['P','D','C','A'].forEach(role => {
                 budget.roles[role].max = Math.round(initialTotal * (strategy[role] || 0) / 100);
             });
+            budget.total.max = initialTotal;
             Object.keys(targets).forEach(key => {
                 const t = targets[key];
                 const player = findPlayer(t.name, t.role);
@@ -1501,14 +1544,25 @@
                 }
             });
             updateBudgetUI();
+            recomputeSlotTargets();
+            filterFeasibleTargets();
             updateTargetsUI();
             renderPlayers();
         }
 
         function saveStrategy() {
+            let newTotal = 0;
             ['P','D','C','A'].forEach(role => {
-                strategy[role] = parseInt(budgetView.querySelector(`#strategy-${role}`).value) || 0;
+                const val = parseInt(budgetView.querySelector(`#strategy-${role}`).value) || 0;
+                strategy[role] = val;
+                const roleMax = Math.round(initialTotal * val / 100);
+                if (budget.roles[role]) {
+                    budget.roles[role].max = roleMax;
+                }
+                newTotal += roleMax;
             });
+            budget.total.max = initialTotal;
+            updateBudgetUI();
             updateSmartPricing();
         }
 
@@ -1565,11 +1619,26 @@
                 slotBudgets[role] = {};
                 const total = Object.values(slotPlan[role]).reduce((a, b) => a + parseInt(b || 0), 0);
                 getRoleSlots(role).forEach(slot => {
-                    slotBudgets[role][slot] = total ? budget.roles[role].max * (slotPlan[role][slot] || 0) / total : 0;
+                    let base = total ? budget.roles[role].max * (slotPlan[role][slot] || 0) / total : 0;
+                    base -= slotBudgetAdjustments[role]?.[slot] || 0;
+                    slotBudgets[role][slot] = Math.max(base, 0);
                 });
             });
             return slotBudgets;
          }
+
+        function redistributeDelta(role, slot, delta) {
+            if (!delta) return;
+            const slots = getRoleSlots(role).filter(s => s !== slot);
+            if (!slots.length) return;
+            const currentBudgets = calculateSlotBudgets()[role];
+            const total = slots.reduce((sum, s) => sum + (currentBudgets[s] - (slotBudgetAdjustments[role][s] || 0)), 0);
+            if (total <= 0) return;
+            slots.forEach(s => {
+                const share = (currentBudgets[s] - (slotBudgetAdjustments[role][s] || 0)) / total;
+                slotBudgetAdjustments[role][s] = (slotBudgetAdjustments[role][s] || 0) + delta * share;
+            });
+        }
 
         function recomputeSlotTargets() {
             const slotBudgets = calculateSlotBudgets();
@@ -1579,31 +1648,63 @@
                 const budget = slotBudgets[t.role]?.[t.slot] || 0;
                 const plannedCount = slotPlan?.[t.role]?.[t.slot] || 0;
                 const basePrice = Number(t.price) || 0;
-                grouped[slotKey] = grouped[slotKey] || { budget, plannedCount, players: [], sum: 0 };
-                grouped[slotKey].budget = budget;
-                if (plannedCount) grouped[slotKey].plannedCount = plannedCount;
-                grouped[slotKey].players.push({ key, basePrice });
-                grouped[slotKey].sum += basePrice;
+                const fixed = t.fixedPrice ? Math.round(t.fixedPrice) : 0;
+                grouped[slotKey] = grouped[slotKey] || {
+                    budget,
+                    plannedCount,
+                    fixedTotal: 0,
+                    varSum: 0,
+                    players: [],
+                    variable: []
+                };
+                const group = grouped[slotKey];
+                group.budget = budget;
+                if (plannedCount) group.plannedCount = plannedCount;
+                group.players.push({ key, basePrice, fixed });
+                if (fixed) {
+                    group.fixedTotal += fixed;
+                    targets[key].targetPrice = fixed;
+                } else {
+                    group.varSum += basePrice;
+                    group.variable.push({ key, basePrice });
+                }
             });
             Object.values(grouped).forEach(group => {
-                const { budget, sum, players } = group;
-                if (sum > 0) {
-                    const scaleFactor = budget / sum;
-                    players.forEach(({ key, basePrice }) => {
-                        targets[key].targetPrice = Math.round(basePrice * scaleFactor);
-                    });
-                } else {
-                    const count = group.plannedCount || players.length || 1;
-                    const per = Math.round(budget / count);
-                    players.forEach(({ key }) => {
-                        targets[key].targetPrice = per;
+                const remainingBudget = Math.max(group.budget - group.fixedTotal, 0);
+                const { variable, varSum } = group;
+                let total = group.fixedTotal;
+                const scaleFactor = varSum > 0 ? remainingBudget / varSum : 0;
+                variable.forEach(({ key, basePrice }) => {
+                    const price = Math.round(basePrice * scaleFactor);
+                    targets[key].targetPrice = price;
+                    total += price;
+                });
+                if (variable.length > 0) {
+                    const diff = group.budget - total;
+                    if (diff !== 0) {
+                        const lastKey = variable[variable.length - 1].key;
+                        targets[lastKey].targetPrice = Math.max(0, (targets[lastKey].targetPrice || 0) + diff);
+                    }
+                } else if (group.players.length > 0 && remainingBudget > 0) {
+                    const count = group.plannedCount || group.players.length;
+                    const per = Math.round(remainingBudget / count);
+                    group.players.forEach(({ key }) => {
+                        targets[key].targetPrice = targets[key].targetPrice || per;
                     });
                 }
             });
         }
 
+        function filterFeasibleTargets(role = null) {
+            Object.entries(targets).forEach(([key, t]) => {
+                if (role && t.role !== role) return;
+                const base = t.fixedPrice ? t.fixedPrice : t.price;
+                const target = t.targetPrice ?? base;
+                t.unreachable = !purchased[key] && target < base;
+            });
+        }
+
         function updateTargetsUI() {
-            recomputeSlotTargets();
             localStorage.setItem('targets', JSON.stringify(targets));
 
             // Render grid (if present)
@@ -1612,21 +1713,24 @@
                 const roleIcons = { 'P': '🥅', 'D': '🛡️', 'C': '⚡', 'A': '⚔️' };
                 const grouped = { 'P': [], 'D': [], 'C': [], 'A': [] };
                 Object.entries(targets).forEach(([key, t]) => {
+                    if (currentTargetRole !== 'all' && t.role !== currentTargetRole) return;
                     grouped[t.role].push([key, t]);
                 });
                 let html = '';
-                ['P','D','C','A'].forEach(role => {
+                const roles = currentTargetRole === 'all' ? ['P','D','C','A'] : [currentTargetRole];
+                roles.forEach(role => {
                     if (!grouped[role].length) return;
                     html += `<h3>${roleIcons[role] ?? role}</h3>`;
                     grouped[role].forEach(([key, t]) => {
                         const purchasedInfo = purchased[key];
                         const othersInfo = others[key];
                         const price = purchasedInfo?.price ?? (t.targetPrice ?? t.price);
-                        const playerData = findPlayer(t.name, t.role);
                         const boughtClass = purchasedInfo ? 'bought' : '';
                         const externalClass = othersInfo ? 'bought-elsewhere' : '';
+                        const unreachableClass = t.unreachable ? 'unreachable' : '';
+                        const titleAttr = t.unreachable ? `title="requires savings in slot ${t.slot}"` : '';
                         html += `
-                        <div class="player-card ${boughtClass} ${externalClass}" data-name="${t.name}" data-role="${role}">
+                        <div class="player-card ${boughtClass} ${externalClass} ${unreachableClass}" data-name="${t.name}" data-role="${role}" ${titleAttr}>
                             <div class="player-info">
                                 <div class="player-name">${roleIcons[role] ?? ''} ${t.name}</div>
                                 <div class="player-team">Ruolo: ${role} • Slot
@@ -1667,6 +1771,8 @@
                             slotPurchases[role][newSlot] = (slotPurchases[role][newSlot] || 0) + 1;
                         }
                         updateBudgetUI();
+                        recomputeSlotTargets();
+                        filterFeasibleTargets();
                         updateTargetsUI();
                         renderPlayers();
                     });
@@ -1678,6 +1784,7 @@
             if (list) {
                 const grouped = {};
                 Object.values(targets).forEach(t => {
+                    if (currentTargetRole !== 'all' && t.role !== currentTargetRole) return;
                     if (!grouped[t.slot]) grouped[t.slot] = [];
                     grouped[t.slot].push(t);
                 });
@@ -1722,6 +1829,8 @@
                     ? { name, role, price, slot, prices }
                     : { name, role, price, slot };
             }
+            recomputeSlotTargets();
+            filterFeasibleTargets();
             updateTargetsUI();
             renderPlayers();
         }
@@ -1744,6 +1853,8 @@
             const newPrice = prompt('Nuovo prezzo per ' + target.name, target.price);
             if (newPrice !== null && !isNaN(newPrice)) {
                 target.price = parseInt(newPrice, 10);
+                recomputeSlotTargets();
+                filterFeasibleTargets();
                 updateTargetsUI();
                 renderPlayers();
             }
@@ -1761,7 +1872,9 @@
             }
             const player = findPlayer(name, role);
             const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
-            purchased[key] = { name, role, price, slot };
+            const prevTarget = targets[key]?.targetPrice ?? targets[key]?.price ?? price;
+            const delta = price - prevTarget;
+            purchased[key] = { name, role, price, slot, delta };
             if (others[key]) {
                 delete others[key];
                 saveOthers();
@@ -1770,6 +1883,7 @@
             budget.roles[role].spent += price;
             budget.roles[role].count += 1;
             slotPurchases[role][slot] += 1;
+            redistributeDelta(role, slot, delta);
             updateBudgetUI();
             const el = document.getElementById(`player-${role}-${name.replace(/\s+/g,'-')}`);
             if (el) {
@@ -1786,7 +1900,9 @@
             targets[key] = targets[key] || { name, role, price, slot };
             targets[key].price = price;
             targets[key].slot = targets[key].slot || slot;
+            targets[key].fixedPrice = price;
             recomputeSlotTargets();
+            filterFeasibleTargets(role);
             updateTargetsUI();
             renderPlayers();
             checkAlerts(role);
@@ -1823,13 +1939,14 @@
             const key = `${role}:${name}`;
             const info = purchased[key];
             if (!info) return;
-            const { price, slot } = info;
+            const { price, slot, delta = 0 } = info;
             budget.total.spent -= price;
             budget.roles[role].spent -= price;
             budget.roles[role].count -= 1;
             if (slot) {
                 slotPurchases[role][slot] = Math.max((slotPurchases[role][slot] || 0) - 1, 0);
             }
+            redistributeDelta(role, slot, -delta);
             delete purchased[key];
             savePurchased();
             updateBudgetUI();
@@ -1840,7 +1957,9 @@
                 const badge = actions.querySelector('.purchase-badge');
                 if (badge) badge.remove();
             }
+            if (targets[key]) delete targets[key].fixedPrice;
             recomputeSlotTargets();
+            filterFeasibleTargets(role);
             updateTargetsUI();
             renderPlayers();
         }
