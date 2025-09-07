@@ -1674,50 +1674,41 @@
                 const slotKey = `${t.role}:${t.slot}`;
                 const budget = slotBudgets[t.role]?.[t.slot] || 0;
                 const plannedCount = slotPlan?.[t.role]?.[t.slot] || 0;
-                const basePrice = Number(t.price) || 0;
                 const fixed = t.fixedPrice ? Math.round(t.fixedPrice) : 0;
                 grouped[slotKey] = grouped[slotKey] || {
                     budget,
                     plannedCount,
                     fixedTotal: 0,
-                    varSum: 0,
-                    players: [],
+                    fixedCount: 0,
                     variable: []
                 };
                 const group = grouped[slotKey];
                 group.budget = budget;
                 if (plannedCount) group.plannedCount = plannedCount;
-                group.players.push({ key, basePrice, fixed });
                 if (fixed) {
                     group.fixedTotal += fixed;
+                    group.fixedCount += 1;
                     targets[key].targetPrice = fixed;
                 } else {
-                    group.varSum += basePrice;
-                    group.variable.push({ key, basePrice });
+                    group.variable.push({ key });
                 }
             });
             Object.values(grouped).forEach(group => {
                 const remainingBudget = Math.max(group.budget - group.fixedTotal, 0);
-                const { variable, varSum } = group;
-                let total = group.fixedTotal;
-                const scaleFactor = varSum > 0 ? remainingBudget / varSum : 0;
-                variable.forEach(({ key, basePrice }) => {
-                    const price = Math.round(basePrice * scaleFactor);
-                    targets[key].targetPrice = price;
-                    total += price;
-                });
+                const variable = group.variable;
                 if (variable.length > 0) {
-                    const diff = group.budget - total;
+                    const denominator = group.plannedCount ? Math.max(group.plannedCount - group.fixedCount, variable.length) : variable.length;
+                    const share = Math.round(remainingBudget / (denominator || 1));
+                    let assigned = 0;
+                    variable.forEach(({ key }) => {
+                        targets[key].targetPrice = share;
+                        assigned += share;
+                    });
+                    const diff = remainingBudget - assigned;
                     if (diff !== 0) {
                         const lastKey = variable[variable.length - 1].key;
                         targets[lastKey].targetPrice = Math.max(0, (targets[lastKey].targetPrice || 0) + diff);
                     }
-                } else if (group.players.length > 0 && remainingBudget > 0) {
-                    const count = group.plannedCount || group.players.length;
-                    const per = Math.round(remainingBudget / count);
-                    group.players.forEach(({ key }) => {
-                        targets[key].targetPrice = targets[key].targetPrice || per;
-                    });
                 }
             });
         }
