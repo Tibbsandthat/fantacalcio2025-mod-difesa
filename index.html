@@ -995,6 +995,7 @@
         const others = {};
         const budgetView = document.getElementById('budget-view');
         const slotConfig = { 'P': 4, 'D': 4, 'C': 4, 'A': 4 };
+        const DEFENDER_SLOT_WEIGHTS = {1:25, 2:15, 3:7, 4:1};
         const slotPlan = {};
         const slotPurchases = {};
         const slotBudgetAdjustments = { 'P': {}, 'D': {}, 'C': {}, 'A': {} };
@@ -1517,16 +1518,28 @@
                 : null;
         }
 
-        function calculateTargetPrices(player, role) {
-            const roleData = budget.roles[role];
-            const remainingBudget = roleData.max - roleData.spent;
-            const remainingSlots = roleData.needed - roleData.count;
-            const perSlot = remainingSlots > 0 ? Math.floor(remainingBudget / remainingSlots) : 0;
-            return {
-                ideal: Math.round(Math.min(player.prezzi.min, perSlot)),
-                suggested: Math.round(Math.min(player.prezzi.avg, perSlot)),
-                max: Math.round(Math.min(player.prezzi.max, remainingBudget))
-            };
+        function calculateTargetPrices(player, role, slot = null) {
+            if (slot) {
+                const budgets = calculateSlotBudgets();
+                const slotBudget = budgets[role]?.[slot] || 0;
+                const planned = slotPlan[role]?.[slot] || 0;
+                const perPlayer = planned > 0 ? slotBudget / planned : 0;
+                return {
+                    ideal: Math.round(Math.min(player.prezzi.min, perPlayer)),
+                    suggested: Math.round(Math.min(player.prezzi.avg, perPlayer)),
+                    max: Math.round(Math.min(player.prezzi.max, slotBudget))
+                };
+            } else {
+                const roleData = budget.roles[role];
+                const remainingBudget = roleData.max - roleData.spent;
+                const remainingSlots = roleData.needed - roleData.count;
+                const perSlot = remainingSlots > 0 ? Math.floor(remainingBudget / remainingSlots) : 0;
+                return {
+                    ideal: Math.round(Math.min(player.prezzi.min, perSlot)),
+                    suggested: Math.round(Math.min(player.prezzi.avg, perSlot)),
+                    max: Math.round(Math.min(player.prezzi.max, remainingBudget))
+                };
+            }
         }
 
         function updateSmartPricing() {
@@ -1540,7 +1553,7 @@
                 const t = targets[key];
                 const player = findPlayer(t.name, t.role);
                 if (player) {
-                    t.prices = calculateTargetPrices(player, t.role);
+                    t.prices = calculateTargetPrices(player, t.role, t.slot);
                 }
             });
             updateBudgetUI();
@@ -1617,12 +1630,26 @@
             const slotBudgets = {};
             ['P','D','C','A'].forEach(role => {
                 slotBudgets[role] = {};
-                const total = Object.values(slotPlan[role]).reduce((a, b) => a + parseInt(b || 0), 0);
-                getRoleSlots(role).forEach(slot => {
-                    let base = total ? budget.roles[role].max * (slotPlan[role][slot] || 0) / total : 0;
-                    base -= slotBudgetAdjustments[role]?.[slot] || 0;
-                    slotBudgets[role][slot] = Math.max(base, 0);
-                });
+                if (role === 'D') {
+                    let totalWeight = 0;
+                    getRoleSlots(role).forEach(slot => {
+                        const count = parseInt(slotPlan[role][slot] || 0);
+                        totalWeight += (DEFENDER_SLOT_WEIGHTS[slot] || 0) * count;
+                    });
+                    getRoleSlots(role).forEach(slot => {
+                        const count = parseInt(slotPlan[role][slot] || 0);
+                        let base = totalWeight ? budget.roles[role].max * (DEFENDER_SLOT_WEIGHTS[slot] || 0) * count / totalWeight : 0;
+                        base -= slotBudgetAdjustments[role]?.[slot] || 0;
+                        slotBudgets[role][slot] = Math.max(base, 0);
+                    });
+                } else {
+                    const total = Object.values(slotPlan[role]).reduce((a, b) => a + parseInt(b || 0), 0);
+                    getRoleSlots(role).forEach(slot => {
+                        let base = total ? budget.roles[role].max * (slotPlan[role][slot] || 0) / total : 0;
+                        base -= slotBudgetAdjustments[role]?.[slot] || 0;
+                        slotBudgets[role][slot] = Math.max(base, 0);
+                    });
+                }
             });
             return slotBudgets;
          }
@@ -1824,7 +1851,7 @@
                 const roleSlots = getRoleSlots(role);
                 let slot = prompt(`Seleziona slot (1-${roleSlots.length}):`, roleSlots[roleSlots.length - 1]);
                 if (!roleSlots.includes(slot)) return;
-                const prices = player ? calculateTargetPrices(player, role) : undefined;
+                const prices = player ? calculateTargetPrices(player, role, slot) : undefined;
                 targets[key] = prices
                     ? { name, role, price, slot, prices }
                     : { name, role, price, slot };
@@ -1871,7 +1898,7 @@
                 if (!roleSlots.includes(slot)) slot = roleSlots[roleSlots.length - 1];
             }
             const player = findPlayer(name, role);
-            const hints = player ? calculateTargetPrices(player, role) : { ideal: 0, suggested: 0 };
+            const hints = player ? calculateTargetPrices(player, role, slot) : { ideal: 0, suggested: 0 };
             const prevTarget = targets[key]?.targetPrice ?? targets[key]?.price ?? price;
             const delta = price - prevTarget;
             purchased[key] = { name, role, price, slot, delta };
@@ -2123,7 +2150,8 @@
             const player = Array.isArray(playerRecord)
                 ? decodePlayer(playerRecord, role)
                 : playerRecord;
-            const priceHints = calculateTargetPrices(player, role);
+            const key = `${role}:${playerName}`;
+            const priceHints = calculateTargetPrices(player, role, targets[key]?.slot);
             const seasons = Object.keys(player.performance || {}).sort().slice(-2).reverse();
             const modal = document.getElementById('player-modal');
             const detailsContainer = document.getElementById('player-details');
