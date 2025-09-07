@@ -979,6 +979,7 @@
 
         // Budget and target tracking
         const initialTotal = 500;
+        window.initialTotal = initialTotal;
         const budget = {
             total: { max: initialTotal, spent: 0 },
             roles: {
@@ -988,7 +989,6 @@
                 'A': { max: 140, spent: 0, count: 0, needed: 6 }
             }
         };
-        const initialTotal = budget.total.max;
         const strategy = {};
         const targets = JSON.parse(localStorage.getItem('targets') || '{}');
         const purchased = {};
