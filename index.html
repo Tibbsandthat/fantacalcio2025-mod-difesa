@@ -804,6 +804,7 @@
             <button id="nav-home" class="nav-btn active">Lista</button>
             <button id="nav-targets" class="nav-btn">Targets</button>
             <button id="nav-budget" class="nav-btn">Budget</button>
+            <button id="toggle-sim" class="nav-btn">Simula</button>
         </div>
         <div id="main-view">
         <div class="search-container">
@@ -926,6 +927,17 @@
                     <li>C: <span id="budget-C">0</span>/<span id="budget-C-max">150</span> (<span id="count-C">0</span>/<span id="needed-C">8</span>)</li>
                     <li>A: <span id="budget-A">0</span>/<span id="budget-A-max">140</span> (<span id="count-A">0</span>/<span id="needed-A">6</span>)</li>
                 </ul>
+                <div id="simulation-panel" style="display:none; margin-top:10px;">
+                    <div>Simulato restante: <span id="sim-remaining">0</span></div>
+                    <div>P: <span id="sim-slot-P"></span></div>
+                    <div>D: <span id="sim-slot-D"></span></div>
+                    <div>C: <span id="sim-slot-C"></span></div>
+                    <div>A: <span id="sim-slot-A"></span></div>
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                        <button id="apply-sim" class="nav-btn" style="flex:1;">Promuovi</button>
+                        <button id="discard-sim" class="nav-btn" style="flex:1;">Annulla</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -971,6 +983,11 @@
         const slotConfig = { 'P': 4, 'D': 4, 'C': 4, 'A': 4 };
         const slotPlan = {};
         const slotPurchases = {};
+        let simulationActive = false;
+        let simBudget = null;
+        let simTargets = null;
+        let simSlotPurchases = null;
+        let simPurchased = null;
         let activePlannerRole = 'P';
         Object.entries(slotConfig).forEach(([role, count]) => {
             slotPlan[role] = {};
@@ -1026,12 +1043,48 @@
             localStorage.setItem('others', JSON.stringify(others));
         }
 
+        function startSimulation() {
+            if (simulationActive) return;
+            simBudget = JSON.parse(JSON.stringify(budget));
+            simTargets = JSON.parse(JSON.stringify(targets));
+            simSlotPurchases = JSON.parse(JSON.stringify(slotPurchases));
+            simPurchased = {};
+            simulationActive = true;
+            document.getElementById('simulation-panel').style.display = 'block';
+            updateSimulationUI();
+        }
+
+        function applySimulation() {
+            if (!simulationActive) return;
+            Object.keys(targets).forEach(k => delete targets[k]);
+            Object.entries(simTargets).forEach(([k, v]) => targets[k] = v);
+            Object.values(simPurchased).forEach(p => {
+                buyPlayer(p.name, p.price, p.role);
+            });
+            simulationActive = false;
+            document.getElementById('simulation-panel').style.display = 'none';
+            simBudget = simTargets = simSlotPurchases = simPurchased = null;
+            updateBudgetUI();
+            updateTargetsUI();
+            renderPlayers();
+        }
+
+        function discardSimulation() {
+            if (!simulationActive) return;
+            simulationActive = false;
+            document.getElementById('simulation-panel').style.display = 'none';
+            simBudget = simTargets = simSlotPurchases = simPurchased = null;
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             history.replaceState({ view: 'main' }, '');
             loadPurchased();
             updateBudgetUI();
             updateTargetsUI();
+            document.getElementById('toggle-sim').addEventListener('click', startSimulation);
+            document.getElementById('apply-sim').addEventListener('click', applySimulation);
+            document.getElementById('discard-sim').addEventListener('click', discardSimulation);
             const playersGrid = document.getElementById('players-grid');
             fetch('players_database.json')
                 .then(response => {
@@ -1488,6 +1541,21 @@
             });
         }
 
+        function updateSimulationUI() {
+            if (!simulationActive) return;
+            const remaining = simBudget.total.max - simBudget.total.spent;
+            document.getElementById('sim-remaining').textContent = remaining;
+            ['P','D','C','A'].forEach(role => {
+                const span = document.getElementById(`sim-slot-${role}`);
+                if (span) {
+                    const slots = getRoleSlots(role)
+                        .map(slot => `${simSlotPurchases[role][slot] || 0}/${slotPlan[role][slot]}`)
+                        .join(' ');
+                    span.textContent = slots;
+                }
+            });
+        }
+
         function getRemainingSlotQuota(role, slot) {
             return Math.max((slotPlan[role][slot] || 0) - (slotPurchases[role][slot] || 0), 0);
         }
@@ -1648,7 +1716,11 @@
             const input = prompt(`Prezzo pagato per ${name}?`, defaultPrice);
             const price = parseInt(input, 10);
             if (input === null || input.trim() === '' || isNaN(price)) return;
-            buyPlayer(name, price, role);
+            if (simulationActive) {
+                simulatePurchase(name, price, role);
+            } else {
+                buyPlayer(name, price, role);
+            }
         }
 
         function editTarget(key) {
@@ -1708,6 +1780,28 @@
                 updateSmartPricing();
             }
             savePurchased();
+        }
+
+        function simulatePurchase(name, price, role) {
+            if (!simulationActive) return;
+            price = Math.round(price);
+            const key = `${role}:${name}`;
+            if (simPurchased[key]) return;
+            let slot = simTargets[key]?.slot;
+            if (!slot) {
+                const roleSlots = getRoleSlots(role);
+                slot = prompt(`Seleziona slot per simulazione (1-${roleSlots.length}):`, roleSlots[roleSlots.length - 1]);
+                if (!roleSlots.includes(slot)) slot = roleSlots[roleSlots.length - 1];
+            }
+            simPurchased[key] = { name, role, price, slot };
+            simBudget.total.spent += price;
+            simBudget.roles[role].spent += price;
+            simBudget.roles[role].count += 1;
+            simSlotPurchases[role][slot] = (simSlotPurchases[role][slot] || 0) + 1;
+            simTargets[key] = simTargets[key] || { name, role, price, slot };
+            simTargets[key].price = price;
+            simTargets[key].slot = simTargets[key].slot || slot;
+            updateSimulationUI();
         }
 
         function unbuyPlayer(name, role) {
